@@ -13,10 +13,10 @@ A middleman solution for call centers that facilitates communication between age
 
 
 # Requirements
-## Running VENV
-python -m venv venv
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-venv\Scripts\activate
+## Running VENV using Powershell
+1. python -m venv venv
+2. Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+3. venv\Scripts\activate
 ## If missing .dll problem, follow this installation 
 https://discuss.pytorch.org/t/failed-to-import-pytorch-fbgemm-dll-or-one-of-its-dependencies-is-missing/201969/17
 ## If problem with chromadb, follow this installation/selection
