@@ -1,0 +1,84 @@
+<!-- templates/index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='style.css') }}" 
+    />
+    <title>Churn Prediction Chatbot</title>
+  </head>
+  <body>
+    <div id="conversation">
+      <div class="conversation-header">
+        <p>Chat</p>
+      </div>
+      <div class="conversation-meta-pane">
+        <div class="logo">
+          <p>Churn Retention Advisor</p>
+        </div>
+
+        <div class="conversation-id-pane">
+          <label for="strIdInput">Conversation ID:</label>
+          <div class="input-with-icon">
+            <div class="img-icon-inp">
+              <img
+                src="{{ url_for('static', filename='search-icon.svg') }}"
+                alt="Search Icon"
+              />
+            </div>
+            <input
+              type="text"
+              id="strIdInput"
+              placeholder="Enter conversation ID..."
+            />
+          </div>
+        </div>
+
+        <div class="conversation-file-pane">
+          <!-- File input element -->
+          <label for="fileInput">Upload File For Querying:</label>
+          <div class="inp-container">
+            <input type="file" id="fileInput" name="file" />
+            <button class="upload" onclick="uploadFile()">Send</button>
+          </div>
+          <div id="files"></div>
+        </div>
+      </div>
+
+      <div class="conversation-messages-pane">
+        <div id="messages"></div>
+        <div class="user-question-container">
+          <textarea
+            id="strUserQuestion"
+            placeholder="Type your question..."
+          ></textarea>
+          <div class="send-messages-pane">
+            <div class="select-conversation">
+              <label for="conversationType">Select Conversation Type:</label>
+              <select id="conversationType" name="conversationType">
+                <option value="General_Conversation">
+                  General Conversation
+                </option>
+                <option value="Dataset_Conversation">
+                  Dataset Conversation
+                </option>
+              </select>
+            </div>
+            <button class="send" onclick="sendMessage()">
+              <img
+                src="{{ url_for('static', filename='send-icon.svg') }}"
+                alt="sendIcon"
+              />
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src="static/script.js"></script>
+  </body>
+</html>
