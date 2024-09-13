@@ -45,6 +45,12 @@ function sendMessage() {
 
 }
 
+function handleEnterKey(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault(); // Prevents adding a new line in the textarea
+        sendMessage(); // Calls the sendMessage function
+    }
+}
 
 // Function to handle uploading files
 function uploadFile() {

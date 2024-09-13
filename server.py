@@ -2,24 +2,42 @@
 pip install --upgrade mosaicml-cli
 """
 from flask import Flask, render_template, request, jsonify
-from LLM_Model.LLM_Component import LLM
-from LLM_Model.LLM_Context_And_Rules import Config_LLM, conversation_template, personas_template
 import os
+from dotenv import load_dotenv
+import Large_Language_Model.LLM_Component as LLM_Component
+import Large_Language_Model.Personas as Personas
 import shutil
-strPromptTemplate = personas_template.strUwUPersonaTemplate + conversation_template.strDefaultConversationTemplate
-
+########################################
+#####                              #####
+#####           Constants          #####
+#####                              #####
+########################################
+load_dotenv()
+strPromptTemplate = Personas.strPersonaUWU + Personas.strDefaultConversationTemplate 
+objLLM = LLM_Component.LLM(intLLMSetting = 1,
+                           strIngestPath = 'Website/Database/Main_Knowledge_Base',
+                           strPromptTemplate = strPromptTemplate,
+                           strAPIKey = os.getenv('GROQ_KEY'),
+                           boolCreateDatabase = True)
 dictDatabase = {
     "liststrUserId":[],
     "listobjLLM":[],
     "liststrUserKnowledgeBasePath":[]
 }
 
-app = Flask(__name__, template_folder='Website/Website_Template/Templates', static_folder='Website/Website_Template/Static')
-
 # Define the directory to save uploaded files
 Path_User_Knowledge_Base = os.path.join(os.getcwd(), 'Website', 'Database', 'User_Knowledge_Base')
 # Define the directory of the main knowledge base
 Path_Main_Knowledge_Base = os.path.join(os.getcwd(), 'Website', 'Database', 'Main_Knowledge_Base')
+
+########################################
+#####                              #####
+#####           Functions          #####
+#####                              #####
+########################################
+app = Flask(__name__, 
+            template_folder = os.getenv('TEMPLATES_DIR'),
+            static_folder=os.getenv('STATIC_DIR'))
 
 @app.route('/')
 def index():
@@ -36,8 +54,11 @@ def get_response():
         return jsonify({'message': "set up conversation id first"})
     elif intCheckSessionResponse == 1: # already setup 
         tempobjLLM = dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))]
-        strResponse = tempobjLLM.get_response(dictPayload['strUserQuestion'])[1]
+        strResponse, strContext = tempobjLLM.get_response(strQuestion = dictPayload['strUserQuestion'], 
+                                                            strOutputPath = None, 
+                                                            boolShowSource = True)
         print("check response here: ", strResponse)
+        print("check reference here: ", strContext)
         dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))] = tempobjLLM
         return jsonify({'strBotResponse': strResponse})
 
@@ -77,14 +98,14 @@ def setup_session(strId):
 
     # Create LLM
     Path_Target_Directory =  os.path.join(Path_User_Knowledge_Base, strId)
-    objLLM_mixtral_1 = LLM(4,
-                     Config_LLM.strGroqAPIToken,
-                     Path_Target_Directory,
-                     strPromptTemplate,
-                     True)
+    objLLM = LLM_Component.LLM(intLLMSetting = 1,
+                           strIngestPath = Path_Target_Directory,
+                           strPromptTemplate = strPromptTemplate,
+                           strAPIKey = os.getenv('GROQ_KEY'),
+                           boolCreateDatabase = True)
     
     dictDatabase['liststrUserId'].append(strId)
-    dictDatabase['listobjLLM'].append(objLLM_mixtral_1)
+    dictDatabase['listobjLLM'].append(objLLM)
     dictDatabase['liststrUserKnowledgeBasePath'].append(Path_Target_Directory)
     return 1
 

@@ -10,7 +10,7 @@
       rel="stylesheet"
       href="{{ url_for('static', filename='style.css') }}" 
     />
-    <title>Churn Prediction Chatbot</title>
+    <title>Call Middleman Chatbot</title>
   </head>
   <body>
     <div id="conversation">
@@ -19,7 +19,7 @@
       </div>
       <div class="conversation-meta-pane">
         <div class="logo">
-          <p>Churn Retention Advisor</p>
+          <p>Call Middleman</p>
         </div>
 
         <div class="conversation-id-pane">
@@ -56,6 +56,7 @@
           <textarea
             id="strUserQuestion"
             placeholder="Type your question..."
+            onkeydown="handleEnterKey(event)"
           ></textarea>
           <div class="send-messages-pane">
             <div class="select-conversation">
