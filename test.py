@@ -6,7 +6,7 @@ import Large_Language_Model.Personas as Personas
 strPromptTemplate = Personas.strPersonaUWU + Personas.strDefaultConversationTemplate 
 
 objLLM = LLM_Component.LLM(intLLMSetting = 1,
-                           strIngestPath = 'Knowledge_Base',
+                           strIngestPath = 'Website/Database/User_Knowledge_Base/222BBB',
                            strPromptTemplate = strPromptTemplate,
                            strAPIKey = os.getenv('GROQ_KEY'),
                            boolCreateDatabase = True)

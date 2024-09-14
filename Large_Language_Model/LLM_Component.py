@@ -42,13 +42,14 @@ class LLM:
             1: "mixtral-8x7b-32768",
             2: "llama3-70b-8192",
             3: "mistralai/Mistral-7B-Instruct-v0.2",
-            4: "gpt-4o-mini"
+            4: "gpt-4o-mini",
+            5: "mixtral-8x7b-32768",
         }
         strModelName = dictLLMSettings.get(intLLMSetting, None)
         if not strModelName:
             raise ValueError(f"Invalid LLM setting: {intLLMSetting}")
             #output list of llm settings
-        if intLLMSetting in [1, 2]: # Groq LLM
+        if intLLMSetting in [1, 2, 5]: # Groq LLM
             if not self.strAPIKey:
                 raise ValueError(f"Requires API Key, set value of 'strAPIKey'")
             self.objLLM = ChatGroq(temperature=fltTemperature, 
@@ -66,12 +67,20 @@ class LLM:
                 temperature=fltTemperature,
                 api_version="2024-02-01"
             )
-        self.objPromptTemplate = PromptTemplate(template=self.strPromptTemplate, 
-                                                input_variables=["context", "question"])
-        self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
-        self.objChain = ({"context": self.objRetriever | self.combine_docs, "question": RunnablePassthrough()} | 
-                         self.objPromptTemplate | 
-                         self.objLLM)
+        if intLLMSetting > 1 and intLLMSetting < 5:
+            self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+                                                    input_variables = ["context", "question"])
+            self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
+            self.objChain = ({"context": self.objRetriever | self.combine_docs, "question": RunnablePassthrough()} | 
+                            self.objPromptTemplate | 
+                            self.objLLM)
+        else:
+            self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+                                                    input_variables=["question"])
+            self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
+            self.objChain = ({"question": RunnablePassthrough()} | 
+                            self.objPromptTemplate | 
+                            self.objLLM)
 
     def combine_docs(self, docs):
         '''
