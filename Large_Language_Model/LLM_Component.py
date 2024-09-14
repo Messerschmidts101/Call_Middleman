@@ -67,7 +67,7 @@ class LLM:
                 temperature=fltTemperature,
                 api_version="2024-02-01"
             )
-        if intLLMSetting > 1 and intLLMSetting < 5:
+        if intLLMSetting > 0 and intLLMSetting < 5:
             self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
                                                     input_variables = ["context", "question"])
             self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})

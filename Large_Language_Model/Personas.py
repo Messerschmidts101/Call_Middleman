@@ -17,9 +17,25 @@ Use the following context (delimited by <ctx></ctx>) to answer the question:
 Answer:
 """
 
+# Accomplishes #1: Message Processing
 strTemplateTranslateToCalm = """From this point forward you are turning complex, frustrated, or negative customer messages into clear, concise, and positive communications for agents. Your goal is to ensure that the core message of the customer is accurately conveyed while adopting a friendly, approachable tone that makes it easier for agents to address the customer's needs effectively.
 
 Translate this customer message:
 {question}
 
 """
+
+# Accomplishes #2: Response Suggestion
+strTemplateSuggestResponse= """From this point forward you are crafting appropriate message responses for customer service call center agents of Inchcape Customer Support. Your goal is to suggest responses that align with the context (delimited by <ctx></ctx>).
+------
+<ctx>
+{context}
+</ctx>
+------
+Suggest appropriate message response for the call center agent, make it short and concise.
+{question}
+
+"""
+
+
+# Accomplishes #3: Contextual Support
