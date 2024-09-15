@@ -13,7 +13,7 @@ import shutil
 #####                              #####
 ########################################
 load_dotenv()
-strPromptTemplate = Personas.strPersonaUWU + Personas.strDefaultConversationTemplate 
+strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
 objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = 'Website/Database/Main_Knowledge_Base',
                            strPromptTemplate = strPromptTemplate,
@@ -100,7 +100,7 @@ def setup_session(strId):
     Path_Target_Directory =  os.path.join(Path_User_Knowledge_Base, strId)
     objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = Path_Target_Directory,
-                           strPromptTemplate = strPromptTemplate,
+                           strPromptTemplate = Personas.strTemplateSuggestResponse,
                            strAPIKey = os.getenv('GROQ_KEY'),
                            boolCreateDatabase = True)
     

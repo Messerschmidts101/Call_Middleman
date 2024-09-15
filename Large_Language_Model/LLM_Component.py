@@ -27,14 +27,23 @@ class LLM:
                  strAPIKey = None, 
                  boolCreateDatabase=False, 
                  fltTemperature = 0.1, 
-                 intRetrieverK = 5):
+                 intRetrieverK = 5,
+                 intLLMAccessory = None):
         self.boolCreateDatabase = boolCreateDatabase
         self.strAPIKey = strAPIKey
         self.strPromptTemplate = strPromptTemplate
         self.objEmbedding = self.ingest_database(strIngestPath)
-        self.initialize_llm(intLLMSetting,fltTemperature,intRetrieverK)
+        self.lisChatHistory = []
+        self.intLLMAccessory = intLLMAccessory
+        self.initialize_llm(intLLMSetting,
+                            fltTemperature,
+                            intRetrieverK,
+                            intLLMAccessory)
 
-    def initialize_llm(self, intLLMSetting, fltTemperature, intRetrieverK):
+    def initialize_llm(self, intLLMSetting, 
+                       fltTemperature, 
+                       intRetrieverK,
+                       intLLMAccessory):
         '''
         This method creates LLM with their RAG Chain for this class
         '''
@@ -52,41 +61,76 @@ class LLM:
         if intLLMSetting in [1, 2, 5]: # Groq LLM
             if not self.strAPIKey:
                 raise ValueError(f"Requires API Key, set value of 'strAPIKey'")
-            self.objLLM = ChatGroq(temperature=fltTemperature, 
-                                   model_name=strModelName, 
-                                   groq_api_key=self.strAPIKey)
+            self.objLLM = ChatGroq(temperature = fltTemperature, 
+                                   model_name = strModelName, 
+                                   groq_api_key = self.strAPIKey)
         elif intLLMSetting == 3:  # HuggingFace LLM
-            self.objLLM = HuggingFaceEndpoint(repo_id=strModelName, 
-                                              temperature=fltTemperature, 
-                                              token=os.environ["HUGGINGFACEHUB_API_TOKEN"])
+            self.objLLM = HuggingFaceEndpoint(repo_id = strModelName, 
+                                              temperature = fltTemperature, 
+                                              token =self.strAPIKey)
         elif intLLMSetting == 4: # OpenAI LLM
             self.objLLM = AzureChatOpenAI(
-                api_key=os.environ["AZURE_OPENAI_API_KEY"],
-                deployment_name=strModelName,  # Use your specific deployment name
-                model=strModelName,  # Or another model you have deployed
-                temperature=fltTemperature,
-                api_version="2024-02-01"
+                api_key = self.strAPIKey,
+                deployment_name = strModelName,  # Use your specific deployment name
+                model = strModelName,  # Or another model you have deployed
+                temperature = fltTemperature,
+                api_version = "2024-02-01"
             )
-        if intLLMSetting > 0 and intLLMSetting < 5:
-            self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
-                                                    input_variables = ["context", "question"])
-            self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
-            self.objChain = ({"context": self.objRetriever | self.combine_docs, "question": RunnablePassthrough()} | 
-                            self.objPromptTemplate | 
-                            self.objLLM)
+
+        if intLLMAccessory > 0:
+            if intLLMAccessory == 1:
+                #just context on RAG
+                self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+                                                        input_variables = ["context", "question"])
+                self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objChain = ({"context": self.objRetriever | self.combine_docs_context, "question": RunnablePassthrough()} | 
+                                self.objPromptTemplate | 
+                                self.objLLM)
+            elif intLLMAccessory == 2:
+                raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMSetting}")
+            elif intLLMAccessory == 3:
+                # Both context and chat history in RAG
+                self.objPromptTemplate = PromptTemplate(
+                    template = self.strPromptTemplate, 
+                    input_variables=["context", "question", "chat_history"]
+                )
+                self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
+                # Use the updated combine_docs_chat_history function to provide chat history
+                self.objChain = ({
+                    "context": self.objRetriever | self.combine_docs_context, 
+                    "question": RunnablePassthrough(),
+                    "chat_history": lambda inputs: self.combine_docs_chat_history()  # Pass the chat history to the chain
+                } | self.objPromptTemplate | self.objLLM)
+            else:
+                raise ValueError(f"Invalid LLM Additions: {intLLMSetting}")
         else:
             self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
                                                     input_variables=["question"])
-            self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
             self.objChain = ({"question": RunnablePassthrough()} | 
                             self.objPromptTemplate | 
-                            self.objLLM)
+                            self.objLLM)            
 
-    def combine_docs(self, docs):
+    def combine_docs_context(self, docs):
         '''
-        This method is a sub process for ingesting database, triggered by ingest_database()
+        This method is a sub process for ingesting database for context only RAG chains, triggered by ingest_database()
         '''
         return "\n\n".join(doc.page_content for doc in docs)
+    
+    def combine_docs_chat_history(self):
+        '''
+        This method combines the chat history entries, ensuring that both User and System responses are properly included.
+        '''
+        return "\n".join([
+            f"User: {dictElement['User']}\nSystem: {dictElement['System']}"
+            for dictElement in self.lisChatHistory if 'User' in dictElement and 'System' in dictElement
+        ])
+
+    def add_to_chat_history(self, strUserInput, strLLMOutput):
+        '''
+        This method adds a single dictionary with both User input and System (LLM) output to the chat history.
+        '''
+        # Update chat history with both User input and System output in the same dictionary
+        self.lisChatHistory.append({"User": strUserInput, "System": strLLMOutput})
 
     def ingest_database(self, strIngestPath):
         '''
@@ -121,6 +165,10 @@ class LLM:
         else:
             objResponseRetriever = None
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
+        if self.intLLMAccessory in [2,3]:
+            self.add_to_chat_history(strQuestion,strResponse)
+            if boolVerbose:
+                print('\n-----','Verbose || Chat History: ', self.lisChatHistory, '\n-----')
         if strOutputPath:
             self.save_response(strResponse, strOutputPath)
         return strResponse,objResponseRetriever

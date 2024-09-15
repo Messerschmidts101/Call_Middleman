@@ -18,11 +18,15 @@ II. Operational Procedures
         Recap: Summarize the resolution and next steps.
         Dialogue To Thank the Customer: "Thank you for calling Inchcape Customer Support where Better Together and Great Experience is our priority. Is there anything to assist you today?
 
-III. Department Escalation
-    1. Customer is having concern about website:
-        Action: Raise a ticket to the Technical Customer Support Department.
-        Instruction: Include a detailed description of the problem and the customer's contact information in the escalation ticket.
-        Follow-Up: Inform the customer that their issue has been escalated and that they will receive an email update within 3-5 business days regarding the status of their concern.
+III. Process Overview
+    1. Customer is having concern about payments:
+        a. Step One: Validate Invoice Details - ask for invoice code, date, and details.
+        b. Step Two: Identify Issue Type - clarify problem if its overcharge, undercharge, missing item, missing warranty, or refund issues.
+        c. Step Three: Provide Resolution 
+    2. Customer is having concern about warranty:
+        a. Step One: Validate Warranty Code - ask for warranty code.
+        b. Step Two: Review Warranty terms - clarify limitations including duration of coverage and conditions if voiding warranty.
+        c. Step Three: Provide Resolution 
 
 IV. Customer Interaction Guidelines
     Tone and Language: Use polite, positive language. Avoid jargon and complex terms.
