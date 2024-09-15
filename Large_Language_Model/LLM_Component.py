@@ -76,6 +76,9 @@ class LLM:
                 temperature = fltTemperature,
                 api_version = "2024-02-01"
             )
+        boolValidity = self.check_validity_of_settings(intLLMAccessory, self.strPromptTemplate)
+        if not boolValidity:
+            raise ValueError("Invalid LLM accessory and prompt template combination")
 
         if intLLMAccessory > 0:
             if intLLMAccessory == 1:
@@ -108,7 +111,15 @@ class LLM:
                                                     input_variables=["question"])
             self.objChain = ({"question": RunnablePassthrough()} | 
                             self.objPromptTemplate | 
-                            self.objLLM)            
+                            self.objLLM)
+
+    def check_validity_of_settings(self,intLLMAccessory,strPromptTemplate):
+        if 'chat_history' in strPromptTemplate and intLLMAccessory in [2,3]:
+            return True
+        elif 'chat_history' not in strPromptTemplate and intLLMAccessory not in [2,3]:
+            return True
+        else:
+            return False
 
     def combine_docs_context(self, docs):
         '''

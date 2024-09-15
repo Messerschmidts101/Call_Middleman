@@ -18,7 +18,8 @@ objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = 'Website/Database/Main_Knowledge_Base',
                            strPromptTemplate = strPromptTemplate,
                            strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True)
+                           boolCreateDatabase = True,
+                           intLLMAccessory = 1)
 dictDatabase = {
     "liststrUserId":[],
     "listobjLLM":[],
@@ -102,7 +103,8 @@ def setup_session(strId):
                            strIngestPath = Path_Target_Directory,
                            strPromptTemplate = Personas.strTemplateSuggestResponse,
                            strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True)
+                           boolCreateDatabase = True,
+                           intLLMAccessory = 3)
     
     dictDatabase['liststrUserId'].append(strId)
     dictDatabase['listobjLLM'].append(objLLM)
