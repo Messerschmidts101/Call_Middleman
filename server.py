@@ -14,12 +14,13 @@ import shutil
 ########################################
 load_dotenv()
 strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
-objLLM = LLM_Component.LLM(intLLMSetting = 1,
+"""objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = 'Website/Database/Main_Knowledge_Base',
                            strPromptTemplate = strPromptTemplate,
                            strAPIKey = os.getenv('GROQ_KEY'),
                            boolCreateDatabase = True,
                            intLLMAccessory = 1)
+"""
 dictDatabase = {
     "liststrUserId":[],
     "listobjLLM":[],
@@ -79,7 +80,7 @@ def upload_file():
         print("checking database:", dictDatabase)
         tempobjLLM = dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))]
         tempPathUser = os.path.join(Path_User_Knowledge_Base, strId)
-        tempobjLLM.objEmbedding = tempobjLLM.ingest_database(tempPathUser)
+        tempobjLLM.objEmbedding = tempobjLLM.ingest_context(tempPathUser)
         dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))] = tempobjLLM
         # Return success
         return jsonify({'message': "file uploaded successfully"})

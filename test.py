@@ -3,14 +3,19 @@ from dotenv import load_dotenv
 load_dotenv()
 import Large_Language_Model.LLM_Component as LLM_Component
 import Large_Language_Model.Personas as Personas
-strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
 
 objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = 'Website/Database/Main_Knowledge_Base',
-                           strPromptTemplate = strPromptTemplate,
+                           strPromptTemplate = Personas.strTemplateSuggestResponse,
                            strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = False,
-                           intLLMAccessory = 1)
+                           boolCreateDatabase = True,
+                           intLLMAccessory = 3)
+
+########################################
+#####                              #####
+#####             Test             #####
+#####                              #####
+########################################
 strResponse = objLLM.get_response('Hi my name is Das',boolVerbose=True)[0]
 print(strResponse)
 
