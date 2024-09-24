@@ -18,27 +18,25 @@ Answer:
 """
 
 # Accomplishes #1: Message Processing
-strTemplateTranslateToCalm = """From this point forward you are turning complex, frustrated, or negative customer messages into clear, concise, and positive communications for agents. Your goal is to ensure that the core message of the customer is accurately conveyed while adopting a friendly, approachable tone that makes it easier for agents to address the customer's needs effectively.
-
-Translate this customer message into clear, short, and positive communications:
+strTemplateTranslateToCalm = """
+Translate this customer's message into a friendly and approachable tone:
 {question}
-
 """
 
 # Accomplishes #2: Response Suggestion
-strTemplateSuggestResponse= """From this point forward you are crafting appropriate message responses for customer service call center agents of Inchcape Customer Support. Your goal is to suggest responses that align with the handbook guideline (delimited by <ctx></ctx>), and consider the chat history (delimted by <chat></chat>). 
+strTemplateSuggestResponse = """
+Generate a concise customer service response for Inchcape agents. Follow the handbook (<context></context>) and consider the chat history (<chat></chat>).
 ------
 <chat>
 {chat_history}
 </chat>
 ------
-<ctx>
+<context>
 {context}
-</ctx>
+</context>
 ------
-Suggest appropriate message response for the call center agent, make it short and concise.
+Suggest a brief response to:
 {question}
-
 """
 
 
