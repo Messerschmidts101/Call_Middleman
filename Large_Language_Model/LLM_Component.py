@@ -27,14 +27,25 @@ class LLM:
                  strAPIKey = None, 
                  boolCreateDatabase=False, 
                  fltTemperature = 0.1, 
-                 intRetrieverK = 5):
+                 intRetrieverK = 5,
+                 intLLMAccessory = None):
         self.boolCreateDatabase = boolCreateDatabase
         self.strAPIKey = strAPIKey
         self.strPromptTemplate = strPromptTemplate
-        self.objEmbedding = self.ingest_database(strIngestPath)
-        self.initialize_llm(intLLMSetting,fltTemperature,intRetrieverK)
+        #self.strIngestPath = self.check_validity_of_ingest_path(strIngestPath)
+        self.strIngestPath = strIngestPath
+        self.objEmbeddingModel = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        self.lisChatHistory = []
+        self.intLLMAccessory = intLLMAccessory
+        self.initialize_llm(intLLMSetting,
+                            fltTemperature,
+                            intRetrieverK,
+                            intLLMAccessory)
 
-    def initialize_llm(self, intLLMSetting, fltTemperature, intRetrieverK):
+    def initialize_llm(self, intLLMSetting, 
+                       fltTemperature, 
+                       intRetrieverK,
+                       intLLMAccessory):
         '''
         This method creates LLM with their RAG Chain for this class
         '''
@@ -42,61 +53,148 @@ class LLM:
             1: "mixtral-8x7b-32768",
             2: "llama3-70b-8192",
             3: "mistralai/Mistral-7B-Instruct-v0.2",
-            4: "gpt-4o-mini"
+            4: "gpt-4o-mini",
+            5: "mixtral-8x7b-32768",
         }
         strModelName = dictLLMSettings.get(intLLMSetting, None)
         if not strModelName:
             raise ValueError(f"Invalid LLM setting: {intLLMSetting}")
             #output list of llm settings
-        if intLLMSetting in [1, 2]: # Groq LLM
+        if intLLMSetting in [1, 2, 5]: # Groq LLM
             if not self.strAPIKey:
                 raise ValueError(f"Requires API Key, set value of 'strAPIKey'")
-            self.objLLM = ChatGroq(temperature=fltTemperature, 
-                                   model_name=strModelName, 
-                                   groq_api_key=self.strAPIKey)
+            self.objLLM = ChatGroq(temperature = fltTemperature, 
+                                   model_name = strModelName, 
+                                   groq_api_key = self.strAPIKey)
         elif intLLMSetting == 3:  # HuggingFace LLM
-            self.objLLM = HuggingFaceEndpoint(repo_id=strModelName, 
-                                              temperature=fltTemperature, 
-                                              token=os.environ["HUGGINGFACEHUB_API_TOKEN"])
+            self.objLLM = HuggingFaceEndpoint(repo_id = strModelName, 
+                                              temperature = fltTemperature, 
+                                              token =self.strAPIKey)
         elif intLLMSetting == 4: # OpenAI LLM
             self.objLLM = AzureChatOpenAI(
-                api_key=os.environ["AZURE_OPENAI_API_KEY"],
-                deployment_name=strModelName,  # Use your specific deployment name
-                model=strModelName,  # Or another model you have deployed
-                temperature=fltTemperature,
-                api_version="2024-02-01"
+                api_key = self.strAPIKey,
+                deployment_name = strModelName,  # Use your specific deployment name
+                model = strModelName,  # Or another model you have deployed
+                temperature = fltTemperature,
+                api_version = "2024-02-01"
             )
-        self.objPromptTemplate = PromptTemplate(template=self.strPromptTemplate, 
-                                                input_variables=["context", "question"])
-        self.objRetriever = self.objEmbedding.as_retriever(search_kwargs={"k": intRetrieverK})
-        self.objChain = ({"context": self.objRetriever | self.combine_docs, "question": RunnablePassthrough()} | 
-                         self.objPromptTemplate | 
-                         self.objLLM)
+        boolValidity = self.check_validity_of_settings(intLLMAccessory, self.strPromptTemplate)
+        if not boolValidity:
+            raise ValueError("Invalid LLM accessory and prompt template combination")
+
+        if intLLMAccessory > 0:
+            if intLLMAccessory == 1:
+                #just context on RAG
+                self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+                                                        input_variables = ["context", "question"])
+                self.objRetrieverContext = self.ingest_context().as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objChain = ({"context": self.objRetrieverContext | self.combine_docs, 
+                                  "question": RunnablePassthrough()} | 
+                                  self.objPromptTemplate | 
+                                  self.objLLM)
+            elif intLLMAccessory == 2:
+                raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMSetting}")
+            elif intLLMAccessory == 3:
+                # Both context and chat history in RAG
+                self.objPromptTemplate = PromptTemplate(
+                    template = self.strPromptTemplate, 
+                    input_variables=["context", "question", "chat_history"]
+                )
+                self.objRetrieverContext = self.ingest_context().as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objRetrieverChatHistory = self.ingest_chat_history().as_retriever(search_kwargs={"k": intRetrieverK})
+                # Use the updated combine_docs_chat_history function to provide chat history
+                self.objChain = ({"context": self.objRetrieverContext | self.combine_docs, 
+                                  "chat_history": self.objRetrieverContext | self.combine_docs,  
+                                  "question": RunnablePassthrough()} | 
+                                  self.objPromptTemplate | 
+                                  self.objLLM)
+            else:
+                raise ValueError(f"Invalid LLM Additions: {intLLMSetting}")
+        else:
+            self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+                                                    input_variables=["question"])
+            self.objChain = ({"question": RunnablePassthrough()} | 
+                            self.objPromptTemplate | 
+                            self.objLLM)
+
+    def check_validity_of_ingest_path(self,strIngestPath):
+        print('before replace: ', strIngestPath)
+        strIngestPath = strIngestPath.replace("\\", " ").replace("/", " ")
+        print('after replace: ', strIngestPath)
+        lisstrIngestPath = list(strIngestPath.split(" "))
+        print('list path: ', lisstrIngestPath)
+        strIngestPath = os.path.join(*lisstrIngestPath)
+        print('new path: ', strIngestPath)
+        return strIngestPath
+    
+    def check_validity_of_settings(self,intLLMAccessory,strPromptTemplate):
+        if 'chat_history' in strPromptTemplate and intLLMAccessory in [2,3]:
+            return True
+        elif 'chat_history' not in strPromptTemplate and intLLMAccessory not in [2,3]:
+            return True
+        else:
+            return False
 
     def combine_docs(self, docs):
         '''
-        This method is a sub process for ingesting database, triggered by ingest_database()
+        This method is a sub process for ingesting database for context only RAG chains, triggered by ingest_context()
         '''
+        print('type of docs: ',type(docs))
         return "\n\n".join(doc.page_content for doc in docs)
 
-    def ingest_database(self, strIngestPath):
+    def add_to_chat_history(self, strUserInput, strLLMOutput):
+        '''
+        This method adds a single dictionary with both User input and System (LLM) output to the chat history.
+        '''
+        # Update chat history with both User input and System output in the same dictionary
+        self.lisChatHistory.append({"Message Index":len(self.lisChatHistory)+1,
+                                    "Timestamp": datetime.now(), 
+                                    "User": strUserInput, 
+                                    "System": strLLMOutput})
+        # Update vector database of chat history
+        objEmbeddingChatHistory = self.ingest_chat_history()
+        self.objRetrieverChatHistory = objEmbeddingChatHistory.as_retriever(search_kwargs={"k": 5})
+        
+    def ingest_context(self):
         '''
         This method converts all files in a directory and outputs a Chroma database on the same location.
         This can happen manually or automatically. 
         You can use this method manually when there is a need to update the knowledge base after this class was insantiated.
         You use this method automatically when insantiating this class and 'boolCreateDatabase is' set to True.
         '''
-        objEmbeddingModel = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-        strKnowledgeDirectory = f"{strIngestPath}/chroma_embeddings"
-
+        strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
         if self.boolCreateDatabase:
-            objLoader = DirectoryLoader(strIngestPath, glob="**/*.txt", loader_cls=TextLoader, show_progress=False)
+            objLoader = DirectoryLoader(self.strIngestPath, glob="**/*.txt", loader_cls=TextLoader, show_progress=False)
             raw_documents = objLoader.load()
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
             documents = text_splitter.split_documents(raw_documents)
-            return Chroma.from_documents(documents, objEmbeddingModel, persist_directory=strKnowledgeDirectory)
+            return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
         else:
-            return Chroma(embedding_function=objEmbeddingModel, persist_directory=strKnowledgeDirectory)
+            return Chroma(embedding_function = self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
+        
+    def ingest_chat_history(self):
+        '''
+        This method adds a single dictionary with both User input and System (LLM) output to the chat history and saves it as a text file in the specified folder.
+        '''
+        #Step one: write conversation as text file
+        strChatHistoryRawDirectory = os.path.join(self.strIngestPath, 'chat_folder')
+        os.makedirs(strChatHistoryRawDirectory, exist_ok=True)
+        strChatHistoryFile = os.path.join(strChatHistoryRawDirectory,'chat_history.txt')
+        with open(strChatHistoryFile, 'w') as file:
+            file.write('Conversation History')
+            for dicItem in self.lisChatHistory:
+                file.write(f"-----\nMessage Index: {dicItem["Message Index"]}; Time: {dicItem["Timestamp"]}\nUser: {dicItem["User"]}:\n")
+                file.write(f"-----\nMessage Index: {dicItem["Message Index"]}; Time: {dicItem["Timestamp"]}\nSystem: {dicItem["System"]}:\n")
+        
+        #Step two: embed the text file
+        strChatHistoryKnowledgeDirectory = os.path.join(strChatHistoryRawDirectory, 'chroma_embeddings')
+        
+        print('check path context: ',strChatHistoryKnowledgeDirectory)
+        objLoader = DirectoryLoader(strChatHistoryRawDirectory, glob="**/*.txt", loader_cls=TextLoader, show_progress=False)
+        raw_documents = objLoader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size = 1000, chunk_overlap=100)
+        documents = text_splitter.split_documents(raw_documents)
+        return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory=strChatHistoryKnowledgeDirectory)
 
     def get_response(self, strQuestion, 
                      strOutputPath=None, 
@@ -108,12 +206,17 @@ class LLM:
             print('Warning: intDelay is less than 90, setting intDelay to 90 or higher.')
             intDelay = 90
         if boolShowSource:
-            objResponseRetriever = self.objRetriever.get_relevant_documents(strQuestion)
+            objResponseRetriever = self.objRetrieverContext.get_relevant_documents(strQuestion)
         else:
             objResponseRetriever = None
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
+        if self.intLLMAccessory in [2,3]:
+            self.add_to_chat_history(strQuestion,strResponse)
+            strResult = self.objRetrieverChatHistory.get_relevant_documents(query = strQuestion)
+            if boolVerbose:
+                print('\n-----','Verbose || Chat History: ',strResult ,'\n-----')
         if strOutputPath:
-            self.save_response(strResponse, strOutputPath)
+            self.save_response_as_file(strResponse, strOutputPath)
         return strResponse,objResponseRetriever
 
     def retry_chain_invoke(self, strQuestion, intRetries, intDelay, boolVerbose):
@@ -131,7 +234,7 @@ class LLM:
                 else:
                     raise RuntimeError(f"Failed after {intRetries} attempts: {e}")
 
-    def save_response(self, strResponse, strOutputPath):
+    def save_response_as_file(self, strResponse, strOutputPath):
         current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
         unique_id = uuid.uuid4()
         output_file_path = os.path.join(strOutputPath, f'LLM_response_{current_datetime}_{unique_id}.txt')

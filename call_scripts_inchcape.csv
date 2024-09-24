@@ -1,0 +1,17 @@
+﻿Message,Type,Topic
+"I was promised a discount on my service, but the invoice doesn’t reflect it. What’s going on.",Calm,Payment
+There are duplicate charges on my bank for the same service. I need this corrected immediately.,Calm,Payment
+"It’s been over a week since my service, and I still haven’t received my receipt. When will I get it?",Calm,Payment
+ The descriptions don’t match the services I received. Can you clarify this for me?,Calm,Payment
+"I brought my car in for a repair, but they told me the warranty won’t cover it. This isn’t what I was told when I bought the warranty!",Calm,Warranty
+"I paid extra for the extended warranty, but now I’m being charged for repairs that should be covered. What’s the point of having this warranty?",Calm,Warranty
+"I submitted my claim weeks ago, and I still haven’t heard anything back. How long is this supposed to take?",Calm,Warranty
+"When I bought the car, they told me the warranty would cover everything. Now, I’m finding out that certain parts aren’t covered. This feels misleading.",Calm,Warranty
+"I was promised a damn discount on my service, but the invoice doesn’t reflect it. What the hell is going on here?",Angry,Payment
+"Why the hell are there duplicate charges on my bank account for the same service? This better get corrected immediately, or I’m gonna lose my shit.",Angry,Payment
+"It’s been over a week since my service, and I still haven’t gotten my damn receipt! When the fuck am I supposed to get it?",Angry,Payment
+"The descriptions on this invoice don’t match a single thing I actually had done. Can you explain this shit, or what?",Angry,Payment
+"I brought my car in for a repair, and now you’re telling me the fucking warranty won’t cover it? That’s not what I was told when I bought the damn thing!",Angry,Warranty
+"I paid extra for the extended warranty, and now you’re charging me for repairs that should be covered? What the hell is the point of even having this warranty?",Angry,Warranty
+"I submitted my claim weeks ago, and I still haven’t heard a damn thing back. How long is this supposed to take, or do you all just not care?",Angry,Warranty
+"When I bought the car, they told me the warranty would cover everything. Now, suddenly, parts aren’t covered? This is completely misleading and a load of crap!",Angry,Warranty

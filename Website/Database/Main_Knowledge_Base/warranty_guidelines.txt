@@ -1,0 +1,10 @@
+Warranty Guidelines for Agents
+
+I. Warranty Codes:
+    A. **STD-01**
+        Description: Standard Warranty – Covers basic parts and labor for up to 3 years or 36,000 miles. 
+    B. **EXT-02**
+        Description: Extended Warranty – Includes additional coverage for major components for up to 5 years or 60,000 miles, extending beyond the standard warranty.
+    C. **PRT-03**
+        Description: Parts Warranty – Provides coverage for specific parts (e.g., battery, alternator, brake, and headlights) for up to 2 years, regardless of mileage.
+        

@@ -13,12 +13,14 @@ import shutil
 #####                              #####
 ########################################
 load_dotenv()
-strPromptTemplate = Personas.strPersonaUWU + Personas.strDefaultConversationTemplate 
-objLLM = LLM_Component.LLM(intLLMSetting = 1,
+strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
+"""objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = 'Website/Database/Main_Knowledge_Base',
                            strPromptTemplate = strPromptTemplate,
                            strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True)
+                           boolCreateDatabase = True,
+                           intLLMAccessory = 1)
+"""
 dictDatabase = {
     "liststrUserId":[],
     "listobjLLM":[],
@@ -78,7 +80,7 @@ def upload_file():
         print("checking database:", dictDatabase)
         tempobjLLM = dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))]
         tempPathUser = os.path.join(Path_User_Knowledge_Base, strId)
-        tempobjLLM.objEmbedding = tempobjLLM.ingest_database(tempPathUser)
+        tempobjLLM.objEmbedding = tempobjLLM.ingest_context(tempPathUser)
         dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))] = tempobjLLM
         # Return success
         return jsonify({'message': "file uploaded successfully"})
@@ -100,9 +102,10 @@ def setup_session(strId):
     Path_Target_Directory =  os.path.join(Path_User_Knowledge_Base, strId)
     objLLM = LLM_Component.LLM(intLLMSetting = 1,
                            strIngestPath = Path_Target_Directory,
-                           strPromptTemplate = strPromptTemplate,
+                           strPromptTemplate = Personas.strTemplateSuggestResponse,
                            strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True)
+                           boolCreateDatabase = True,
+                           intLLMAccessory = 3)
     
     dictDatabase['liststrUserId'].append(strId)
     dictDatabase['listobjLLM'].append(objLLM)
