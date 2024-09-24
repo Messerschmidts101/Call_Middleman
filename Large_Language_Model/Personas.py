@@ -25,7 +25,7 @@ Translate this customer's message into a friendly and approachable tone:
 
 # Accomplishes #2: Response Suggestion
 strTemplateSuggestResponse = """
-Generate a concise customer service response for Inchcape agents. Follow the handbook (<context></context>) and consider the chat history (<chat></chat>).
+Generate a concise call response for Inchcape call center agents. Follow the handbook (<context></context>) and consider the chat history (<chat></chat>).
 ------
 <chat>
 {chat_history}
@@ -35,7 +35,7 @@ Generate a concise customer service response for Inchcape agents. Follow the han
 {context}
 </context>
 ------
-Suggest a brief response to:
+Suggest a brief call response to this customer's message:
 {question}
 """
 

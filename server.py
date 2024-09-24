@@ -14,13 +14,7 @@ import shutil
 ########################################
 load_dotenv()
 strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
-"""objLLM = LLM_Component.LLM(intLLMSetting = 1,
-                           strIngestPath = 'Website/Database/Main_Knowledge_Base',
-                           strPromptTemplate = strPromptTemplate,
-                           strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True,
-                           intLLMAccessory = 1)
-"""
+
 dictDatabase = {
     "liststrUserId":[],
     "listobjLLM":[],
@@ -56,13 +50,14 @@ def get_response():
         return jsonify({'message': "set up conversation id first"})
     elif intCheckSessionResponse == 1: # already setup 
         tempobjLLM = dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))]
-        strResponse, strContext = tempobjLLM.get_response(strQuestion = dictPayload['strUserQuestion'], 
-                                                            strOutputPath = None, 
-                                                            boolShowSource = True)
-        print("check response here: ", strResponse)
-        print("check reference here: ", strContext)
+        dicResult = tempobjLLM.get_response(strQuestion = dictPayload['strUserQuestion'], 
+                                            boolShowSourceContext = True,
+                                            boolShowSourceChatHistory = True)
+        print("check response here: ", dicResult['strResponse'])
+        print("check context here: ", dicResult['strContext'])
+        print("check chat history here: ", dicResult['strChatHistory'])
         dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))] = tempobjLLM
-        return jsonify({'strBotResponse': strResponse})
+        return jsonify({'strBotResponse': dicResult['strResponse']})
 
 @app.route('/upload_file', methods=['POST'])
 def upload_file():

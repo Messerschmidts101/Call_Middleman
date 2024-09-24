@@ -197,27 +197,31 @@ class LLM:
         return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory=strChatHistoryKnowledgeDirectory)
 
     def get_response(self, strQuestion, 
-                     strOutputPath=None, 
-                     boolShowSource = False,
+                     boolShowSourceContext = False,
+                     boolShowSourceChatHistory = False,
                      intRetries = 3,
                      intDelay = 90,
                      boolVerbose = False):
         if intDelay < 90:
             print('Warning: intDelay is less than 90, setting intDelay to 90 or higher.')
             intDelay = 90
-        if boolShowSource:
-            objResponseRetriever = self.objRetrieverContext.get_relevant_documents(strQuestion)
-        else:
-            objResponseRetriever = None
+        if boolShowSourceContext and self.intLLMAccessory in [2,3]:
+            strSourceContext = self.objRetrieverContext.get_relevant_documents(strQuestion)
+        if boolShowSourceChatHistory and self.intLLMAccessory in [2,3]:
+            strSourceChatHistory = self.objRetrieverChatHistory.get_relevant_documents(strQuestion)
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
         if self.intLLMAccessory in [2,3]:
             self.add_to_chat_history(strQuestion,strResponse)
-            strResult = self.objRetrieverChatHistory.get_relevant_documents(query = strQuestion)
-            if boolVerbose:
-                print('\n-----','Verbose || Chat History: ',strResult ,'\n-----')
-        if strOutputPath:
-            self.save_response_as_file(strResponse, strOutputPath)
-        return strResponse,objResponseRetriever
+        dicResult = {
+            'strResponse':strResponse,
+            'strContext':None,
+            'strChatHistory':None,
+        }
+        if strSourceContext:
+            dicResult['strContext'] = strSourceContext
+        if strSourceChatHistory:
+            dicResult['strChatHistory'] = strSourceChatHistory
+        return dicResult
 
     def retry_chain_invoke(self, strQuestion, intRetries, intDelay, boolVerbose):
         for intAttempt in range(intRetries):
@@ -234,7 +238,6 @@ class LLM:
                 else:
                     raise RuntimeError(f"Failed after {intRetries} attempts: {e}")
 
-    def save_response_as_file(self, strResponse, strOutputPath):
         current_datetime = datetime.now().strftime('%Y%m%d_%H%M%S')
         unique_id = uuid.uuid4()
         output_file_path = os.path.join(strOutputPath, f'LLM_response_{current_datetime}_{unique_id}.txt')
