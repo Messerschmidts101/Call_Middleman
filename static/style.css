@@ -1,0 +1,237 @@
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Raleway", sans-serif;
+}
+
+body {
+  background-color: #f3f3f3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+#chatroom {
+  width: 100%;
+  max-width: 1200px;
+  background: #fff;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #01223a;
+  color: white;
+  padding: 20px;
+}
+
+.logo{
+  
+  flex: 50%;
+}
+.logo h1 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+
+.room-info{
+  display: inline-flex;
+}
+.room-info label,
+.room-info input {
+  color: white;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+input#customerName,
+input#roomNumber {
+  background: none;
+  border: none;
+  border-bottom: 1px solid white;
+  color: white;
+  padding: 5px;
+  width: 100px;
+}
+
+.content {
+  display: flex;
+  flex-direction: row;
+  padding: 20px;
+  gap: 20px;
+  height: 70vh;
+}
+
+
+.llm-panel {
+  width: 30%; /* Keep it responsive */
+  background-color: #01223a;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center align elements horizontally */
+  padding: 2%; /* Reduced padding for tighter layout */
+  gap: 2%; /* Reduced gap between elements for less space */
+}
+
+.advised-response-panel {
+  flex-grow: 8.5;
+  width: 100%;
+  background-color: #f8f8f8;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+  font-size: 16px;
+  padding: 15px; /* Add internal padding for content spacing */
+}
+
+.advised-response-panel h3 {
+  font-weight: 600;
+  margin-bottom: 10px; /* Reduced margin for less space */
+}
+
+.file-input-pane {
+  flex-grow: 1.5;
+  display: inline-flex;
+  gap: 5px; /* Reduce the gap between the elements */
+  margin-bottom: 1.5%; /* Reduced bottom margin for less space */
+}
+.fileInput{
+  flex:70%
+}
+.upload-btn {
+  flex: 30%;
+  background-color: #e0e0e0;
+  color: #01223a;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.upload-btn:hover {
+  background-color: #b2b2b2;
+}
+
+
+
+
+.conversation-panel {
+  width: 80%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 5%;
+  border: 1px solid #e0e0e0;
+  border-radius: 10px;
+  background-color: #fafafa;
+  margin-bottom: 10%;
+}
+
+.message-input {
+  display: flex;
+  gap: 10px;
+}
+
+textarea#userMessage {
+  width: 80%;
+  height: 60px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+  font-size: 16px;
+  resize: none;
+}
+
+textarea#userMessage:focus {
+  border: 1px solid #1d728e;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.send-btn {
+  padding: 0 15px;
+  background-color: #01223a;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.send-btn:hover {
+  background-color: #01223a;
+}
+
+.send-btn img {
+  width: 20px;
+  height: auto;
+}
+
+/* Scrollbar for message panel */
+.messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+.bot,
+.user {
+  max-width: 600px;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 15px 20px;
+  margin-bottom: 20px;
+}
+
+.bot {
+  align-self: flex-start;
+  background-color: #eef4fa;
+}
+
+.user {
+  align-self: flex-end;
+  background-color: #d8e3ea;
+}
+
+@media screen and (max-width: 768px) {
+  .content {
+    flex-direction: column;
+  }
+
+  .advised-response-panel,
+  .conversation-panel {
+    width: 100%;
+  }
+
+  textarea#userMessage {
+    width: 100%;
+  }
+}
