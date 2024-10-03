@@ -1,63 +1,36 @@
-function sendMessage() {
-    const customerName = document.getElementById('customerName').value;
+const socket = io(); 
+
+function joinRoom() {
     const roomNumber = document.getElementById('roomNumber').value;
-    const userMessage = document.getElementById('userMessage').value;
-    const divMessages = document.getElementById('messages');
-
-    console.log('sendMessage() function called', userMessage);
-
-    // Clear textarea after sending message
-    document.getElementById("userMessage").value = '';
-
-    // Display user's message
-    divMessages.innerHTML += `
-        <div class="user-message">
-            <b>User (${customerName}, Room ${roomNumber}):</b>
-            <p>${userMessage.replace(/\n/g, '<br>')}</p>
-        </div>`;
-
-    // Scroll to bottom of the messages
-    divMessages.scrollTop = divMessages.scrollHeight;
-
-    // Display loading indicator
-    divMessages.innerHTML += '<div class="bot-message">Bot is typing...</div>';
-
-    // Make a POST request to Flask server
-    fetch('/get_response', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            'customerName': customerName,
-            'roomNumber': roomNumber,
-            'userMessage': userMessage,
-        }),
-    })
-    .then(response => response.json())
-    .then(data => {
-        console.log('Received bot response:', data);
-        
-        // Remove loading indicator
-        divMessages.removeChild(divMessages.lastChild);
-
-        // Display bot's response
-        divMessages.innerHTML += `
-            <div class="bot-message">
-                <b>Bot:</b> 
-                <p>${data.strBotResponse.replace(/\n/g, '<br>')}</p>
-            </div>`;
-
-        // Scroll to bottom after the bot response
-        divMessages.scrollTop = divMessages.scrollHeight;
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        // Remove loading indicator if there's an error
-        divMessages.removeChild(divMessages.lastChild);
-    });
+    const strId = document.getElementById('customerName').value; 
+    socket.emit('join_room', { roomNumber: roomNumber, strId: strId });
+    //update UI soon
+    console.log(`User ${strId} joined room ${roomNumber}`);
 }
 
+function sendMessage() {
+    const strId = document.getElementById('customerName').value; // Adjusted to use the correct input ID
+    const strUserQuestion = document.getElementById('userMessage').value; // Adjusted to use the correct input ID
+    const roomNumber = document.getElementById('roomNumber').value;
+    console.log('sendMessage() function called ' + strUserQuestion); 
+    // Clear text area
+    document.getElementById("userMessage").value = '';
+    // Emit a message to the server
+    socket.emit('send_message', { strId, strUserQuestion, roomNumber });
+    // Add functionality to call llm for advice
+}
+
+// Listen for messages from the server and update the UI
+socket.on('message', (data) => {
+    const divMessagePane = document.getElementById('messages');
+    const divMessage = document.createElement('div');
+    divMessage.classList.add('SingleMessage');
+    divMessage.style.whiteSpace = 'pre-line';
+    divMessage.innerHTML = `<b>${data.username}: </b> <br> ${data.message}`;
+    `<div id="SingleMessage"> <b>${data.username}: </b> <br> ${data.message}</div>`;
+    divMessagePane.appendChild(divMessage)
+});
+// Function to handle pressing enter key
 function handleEnterKey(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
         event.preventDefault(); // Prevents adding a new line in the textarea
@@ -65,18 +38,15 @@ function handleEnterKey(event) {
     }
 }
 
-// Function to handle file uploading
+// Function to handle uploading files (unchanged)
 function uploadFile() {
-    const customerName = document.getElementById('customerName').value;
+    const strId = document.getElementById('customerName').value;
     const fileInput = document.getElementById('fileInput');
     const divMessages = document.getElementById('messages');
     const formData = new FormData();
 
-    // Check if a file is selected
     if (fileInput.files.length > 0) {
         const selectedFile = fileInput.files[0];
-
-        // Check if the file type is either CSV or TXT
         if (selectedFile.type === 'text/csv' || selectedFile.type === 'text/plain') {
             formData.append('file', selectedFile);
         } else {
@@ -88,29 +58,20 @@ function uploadFile() {
         return;
     }
 
-    // Append customerName to the form data
-    formData.append('customerName', customerName);
+    formData.append('strId', strId);
 
-    // Display loading indicator
     const loadingIndicator = document.createElement('div');
     loadingIndicator.textContent = 'Uploading...';
     divMessages.appendChild(loadingIndicator);
 
-    // Make a POST request to Flask server for file upload
     fetch('/upload_file', {
         method: 'POST',
         body: formData,
     })
     .then(response => response.json())
     .then(data => {
-        // Remove loading indicator
         divMessages.removeChild(loadingIndicator);
-
-        // Display response from the server
-        divMessages.innerHTML += `
-            <div class="file-upload-response">
-                <p>${data.message}</p>
-            </div>`;
+        divMessages.innerHTML += `<div>${data.message}</div>`;
     })
     .catch(error => {
         console.error('Error:', error);

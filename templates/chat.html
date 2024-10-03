@@ -44,23 +44,24 @@
                 </div>
             </div>
         <!-- Conversation Panel (Customer-Agent Messages) -->
-        <div class="conversation-panel">
-            <div class="messages" id="messages">
-            <!-- Messages will populate here -->
-            </div>
+            <div class="conversation-panel">
+                <div class="messages" id="messages">
+                <!-- Messages will populate here -->
+                </div>
 
-            <!-- Message Input Box -->
-            <div class="message-input">
-            <textarea id="userMessage" placeholder="Enter your message..." onkeydown="handleEnterKey(event)"></textarea>
-            <button class="send-btn" onclick="sendMessage()">
-                <img src="{{ url_for('static', filename='send-icon.svg') }}" alt="Send" />
-            </button>
+                <!-- Message Input Box -->
+                <div class="message-input">
+                <textarea id="userMessage" placeholder="Enter your message..." onkeydown="handleEnterKey(event)"></textarea>
+                <button class="send-btn" onclick="sendMessage()">
+                    <img src="{{ url_for('static', filename='send-icon.svg') }}" alt="Send" />
+                </button>
+                </div>
             </div>
-        </div>
         </div>
     </div>
 
     <!-- JavaScript -->
-    <script src="static/script.js"></script>
+    <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
     </body>
 </html>
