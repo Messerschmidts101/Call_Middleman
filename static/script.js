@@ -20,16 +20,23 @@ function sendMessage() {
     // Add functionality to call llm for advice
 }
 
-// Listen for messages from the server and update the UI
-socket.on('message', (data) => {
+socket.on('chat_history', (data) => {
+    console.log('check chat_history: ',data)
+    const chatHistory = data.chat_history;
     const divMessagePane = document.getElementById('messages');
-    const divMessage = document.createElement('div');
-    divMessage.classList.add('SingleMessage');
-    divMessage.style.whiteSpace = 'pre-line';
-    divMessage.innerHTML = `<b>${data.username}: </b> <br> ${data.message}`;
-    `<div id="SingleMessage"> <b>${data.username}: </b> <br> ${data.message}</div>`;
-    divMessagePane.appendChild(divMessage)
+    
+    divMessagePane.innerHTML = '';  // Clear existing messages
+    
+    // Loop through the chat history and add each message
+    chatHistory.forEach((msg) => {
+        const divMessage = document.createElement('div');
+        divMessage.classList.add('SingleMessage');
+        divMessage.style.whiteSpace = 'pre-line';
+        divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate} </b> <br> ${msg.strMessage}`;
+        divMessagePane.appendChild(divMessage);
+    });
 });
+
 // Function to handle pressing enter key
 function handleEnterKey(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
