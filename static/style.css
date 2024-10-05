@@ -57,6 +57,41 @@ body {
   margin-right: 10px;
 }
 
+
+#UserType {
+  width: 100px; /* Adjust width to your preference */
+  padding: 10px; /* Internal padding for better spacing */
+  border: 2px solid #01223a; /* Border color */
+  border-radius: 5px; /* Rounded corners */
+  background-color: #f8f8f8; /* Light background */
+  color: #01223a; /* Text color */
+  font-size: 10px; /* Text size */
+  appearance: none; /* Remove default arrow */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%2210%22 height%3D%225%22 viewBox%3D%220 0 10 5%22%3E%3Cpath fill%3D%22%2301223a%22 d%3D%22M0 0l5 5 5-5z%22/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 10px center; /* Arrow positioning */
+  background-size: 10px 5px; /* Arrow size */
+  cursor: pointer; /* Pointer on hover */
+}
+
+/* Hover effect */
+#UserType:hover {
+  border-color: #1d728e;
+}
+
+/* Focus effect */
+#UserType:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(29, 114, 142, 0.5); /* Subtle shadow on focus */
+}
+
+/* Style options inside select */
+#UserType option {
+  background-color: #fff; /* White background for options */
+  color: #01223a; /* Text color */
+}
+
+
 input#customerName,
 input#roomNumber {
   background: none;
@@ -90,6 +125,8 @@ input#roomNumber {
 
 .advised-response-panel {
   flex-grow: 8.5;
+  display: flex;
+  flex-direction: column;
   width: 100%;
   background-color: #f8f8f8;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
@@ -97,7 +134,11 @@ input#roomNumber {
   padding: 15px; /* Add internal padding for content spacing */
 }
 
-.advised-response-panel h3 {
+.advised-response-panel-message{
+  flex-grow: 8.5;
+}
+
+.advised-response-panel-message h3 {
   font-weight: 600;
   margin-bottom: 10px; /* Reduced margin for less space */
 }
@@ -131,7 +172,7 @@ input#roomNumber {
 }
 
 .conversation-panel {
-  width: 80%;
+  flex-grow: 8.5;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -246,3 +287,72 @@ textarea#userMessage:focus {
     width: 100%;
   }
 }
+
+.advised-response-panel-switch{
+  display: flex;
+  flex-direction: row;
+  gap: 2%;
+}
+
+.switch-content{
+  display: flex;
+  justify-content: center;   /* Horizontally center */
+  align-items: center;
+}
+
+/* The switch - the outer container */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* The hidden checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider (the visible part of the switch) */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+/* The circle inside the slider */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+/* When the checkbox is checked */
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+/* Move the circle to the right when checked */
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Optional: Add a shadow effect to the slider */
+.slider {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+

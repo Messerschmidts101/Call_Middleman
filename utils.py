@@ -10,6 +10,15 @@ def create_chat_history_table():
     tblChatHistory = pd.DataFrame(dicAllChatHistory)
     return tblChatHistory
 
+def create_context_table():
+    dicContextDatabase = {
+        "liststrUserId":[],
+        "listobjLLM":[],
+        "liststrUserKnowledgeBasePath":[]
+    }
+    tblContextDatabase = pd.DataFrame(dicContextDatabase)
+    return tblContextDatabase
+
 def add_message_to_chat_history_table(tblChatHistory,dicPayload):
     """
     [[Inputs]]

@@ -1,3 +1,17 @@
+document.getElementById('UserType').addEventListener('change', function() {
+    const selectedUserType = this.value;
+    const llmPanel = document.querySelector('.llm-panel'); // Select the llm-panel
+
+    if (selectedUserType === "Customer") {
+      // Hide the llm-panel when "Customer" is selected
+      llmPanel.style.display = 'none';
+    } else if (selectedUserType === "Agent") {
+      // Show the llm-panel when "Agent" is selected
+      llmPanel.style.display = 'flex';
+    }
+  });
+
+
 const socket = io(); 
 
 function joinRoom() {
@@ -84,4 +98,17 @@ function uploadFile() {
         console.error('Error:', error);
         divMessages.removeChild(loadingIndicator);
     });
+}
+
+function toggleLLMAdvising() {
+    const checkbox = document.getElementById('toggleSwitch');
+    const heading = document.getElementById('switch-content');
+    
+    if (checkbox.checked) {
+        heading.style.color = '#2196F3';
+        heading.innerHTML = "LLM Advising Is On";
+    } else {
+        heading.style.color = '#000000';
+        heading.innerHTML = "LLM Advising Is Off";
+    }
 }

@@ -17,6 +17,15 @@
                 <h1>Customer Support Online Room</h1>
             </div>
             <div class="room-info">
+                <label for="UserType">Select User Type:</label>
+                <select id="UserType" name="UserType">
+                    <option value="Customer">
+                    Customer
+                    </option>
+                    <option value="Agent">
+                    Agent
+                    </option>
+                </select>
                 <label for="customerName">Name:</label>
                 <input type="text" id="customerName" placeholder="###" />
                 <label for="roomNumber">Room:</label>
@@ -32,9 +41,20 @@
             <div class="llm-panel">
                 <!-- Advised Response Panel (For Agent) -->
                 <div class="advised-response-panel">
-                    <h3>🤖 Advised Response:</h3>
-                    <div id="advisedResponse">
-                        <p>LLM is waiting</p>
+                    <div class="advised-response-panel-message">
+                        <h3>🤖 Advised Response:</h3>
+                        <div id="advisedResponse">
+                            <p>LLM is waiting</p>
+                        </div>
+                    </div>
+                    <div class="advised-response-panel-switch">
+                        <label class="switch">
+                            <input type="checkbox" id="toggleSwitch", onchange="toggleLLMAdvising()">
+                            <span class="slider"></span>
+                        </label>
+                        <div class="switch-content" id="switch-content">
+                            <h4> Toggle LLM Advising </h4>
+                        </div>
                     </div>
                 </div>
                 <!-- File Input (For LLM) -->

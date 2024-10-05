@@ -1,7 +1,11 @@
-from flask import Flask, render_template
-from flask_socketio import SocketIO, join_room, leave_room, send, emit
+from flask import Flask, render_template, request, jsonify
+from flask_socketio import SocketIO, join_room, leave_room, emit
+from dotenv import load_dotenv
+import os
 import utils as U
-
+import Large_Language_Model.LLM_Component as LLM_Component
+import Large_Language_Model.Personas as Personas
+import shutil
 
 
 ##########################################
@@ -9,8 +13,9 @@ import utils as U
 #######          Constants         #######
 #######                            #######
 ##########################################
+load_dotenv()
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your_secret_key'
+#app.config['SECRET_KEY'] = 'your_secret_key' ; just for optional cyber-sec purposes to secure session
 socketio = SocketIO(app)
 dicAllChatHistory = {
     'strUser': [],
@@ -19,8 +24,11 @@ dicAllChatHistory = {
     'strRoom': [],
 }
 tblChatHistory = U.create_chat_history_table()
-print('initialized chat history table: ')
-print(tblChatHistory)
+tblContextDatabase = U.create_context_table()
+strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
+Path_User_Knowledge_Base = os.path.join(os.getcwd(), 'Website', 'Database', 'User_Knowledge_Base')
+Path_Main_Knowledge_Base = os.path.join(os.getcwd(), 'Website', 'Database', 'Main_Knowledge_Base')
+
 
 ##########################################
 #######                            #######
@@ -30,7 +38,7 @@ print(tblChatHistory)
 # Route to render the chatroom page
 @app.route('/')
 def index():
-    return render_template('chat.html')  # Ensure this matches your HTML filename
+    return render_template('chat.html')  
 
 # Join a room
 @socketio.on('join_room')
@@ -104,11 +112,12 @@ def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
         emit('chat_history', 
             {'chat_history': dicPayloadChatHistory},
             room = strRoom)
+    show_chat_history()
 
 def show_chat_history():
     global tblChatHistory
-    
     print('Updated Chat History')
     print(tblChatHistory)
+
 if __name__ == '__main__':
     socketio.run(app, debug=True)  # Added debug=True for development purposes
