@@ -1,5 +1,17 @@
 from datetime import datetime
+import Large_Language_Model.LLM_Component as LLM_Component
+import Large_Language_Model.Personas as Personas
 import pandas as pd
+import os,shutil
+strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
+
+def create_knowledge_base_path(boolMode = 0):
+    if boolMode == 0:
+        strPath = os.path.join(os.getcwd(), 'Website', 'Database', 'User_Knowledge_Base')
+    elif boolMode == 1:
+        strPath = os.path.join(os.getcwd(), 'Website', 'Database', 'Main_Knowledge_Base')
+    return strPath
+    
 def create_chat_history_table():
     dicAllChatHistory = {
         'strUser': [],
@@ -12,9 +24,9 @@ def create_chat_history_table():
 
 def create_context_table():
     dicContextDatabase = {
-        "liststrUserId":[],
-        "listobjLLM":[],
-        "liststrUserKnowledgeBasePath":[]
+        "strRoom":[],
+        "objLLM":[],
+        "strKnowledgePath":[]
     }
     tblContextDatabase = pd.DataFrame(dicContextDatabase)
     return tblContextDatabase
@@ -79,3 +91,84 @@ def get_chat_history(tblChatHistory, strRoom):
     tblChatHistoryFilteredSorted = tblChatHistoryFiltered.sort_values(by='dtDate', ascending=True)
     tblChatHistoryFilteredSorted['dtDate'] = tblChatHistoryFilteredSorted['dtDate'].dt.strftime("%d/%m/%Y %H:%M:%S") # essential to convert to string as payload wont doesnt recognize this data type
     return tblChatHistoryFilteredSorted
+
+def create_llm_to_room(tblContextDatabase,
+                       strRoom,
+                       strPathKnowledgeBaseUser,
+                       strPathKnowledgeBaseMain):
+    """
+    [[Inputs]]
+        1. tblContextDatabase = the pandas table you want to modify
+        2. strRoom = the room that needs to have the LLM
+        3. strPathKnowledgeBaseUser = the directory path containing specific contexts
+        4. strPathKnowledgeBaseMain = the directory path containing general contexts
+    [[Process/Outputs]]
+        This creates LLM for a room, it is added as a new row to the table
+    """
+    def include_main_knowledge_base(strRoom):
+        Path_Target_Directory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
+        shutil.copytree(strPathKnowledgeBaseMain, Path_Target_Directory,dirs_exist_ok=True)
+
+    # Create a directory based on strRoom
+    strUserFolderPath = os.path.join(strPathKnowledgeBaseUser, strRoom)
+    os.makedirs(strUserFolderPath, exist_ok=True)
+    include_main_knowledge_base(strRoom)
+
+    # Create LLM
+    Path_Target_Directory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
+    objLLM = LLM_Component.LLM(intLLMSetting = 1,
+                        strIngestPath = Path_Target_Directory,
+                        strPromptTemplate = Personas.strTemplateSuggestResponse,
+                        strAPIKey = os.getenv('GROQ_KEY'),
+                        boolCreateDatabase = True,
+                        intLLMAccessory = 3)
+    # Update Table
+    dicNewRow = {
+                    'strRoom' : strRoom,
+                    'objLLM' : objLLM,
+                    'strKnowledgePath' : Path_Target_Directory,
+                }
+    new_row = pd.DataFrame([dicNewRow]) 
+    tblContextDatabase = pd.concat([tblContextDatabase, new_row], ignore_index=True)
+    return tblContextDatabase
+
+def get_llm(tblContextDatabase,strRoom):
+    '''
+    [[Inputs]]
+        1. tblContextDatabase = the pandas table you want to find the llm assigned to the room; each llm in this table has different contexts as it is assigned to different rooms
+        2. strRoom = the room identifier for which the LLM is assigned, this is used to see if theres an llm assigned to the room already
+    [[Process/Outputs]]
+        This checks if there's an llm already for that room
+    '''
+    tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
+    if not tblResult.empty:
+        return True
+    else:
+        return False
+
+def get_llm_response(tblContextDatabase,
+                     strRoom,
+                     strQuestion):
+    '''
+    [[Inputs]]
+        1. tblContextDatabase = the pandas table you want to find the llm assigned to the room; each llm in this table has different contexts as it is assigned to different rooms
+        2. strRoom = the room identifier for which the LLM is assigned, this is used to locate the corresponding LLM in the database
+        3. strQuestion = the question of customer that the llm will advise response
+    [[Process/Outputs]]
+        This asks the llm the appropriate response to a customer's query
+    '''
+    tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
+    if not tblResult.empty:
+        # Get the LLM object
+        tempobjLLM = tblResult['objLLM'].iloc[0]
+        strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
+                                                          strOutputPath = None, 
+                                                          boolShowSource = True)
+        print("[[VERBOSE]] check llm response here: ", strResponse)
+        print("[[VERBOSE]] check llm reference here: ", strContext)
+        return strResponse,strContext
+    else:
+        # Do something if no rows matched the filter
+        print(f"No data found for room: {strRoom}")
+        return None,None
+

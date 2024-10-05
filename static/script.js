@@ -15,22 +15,34 @@ document.getElementById('UserType').addEventListener('change', function() {
 const socket = io(); 
 
 function joinRoom() {
-    const roomNumber = document.getElementById('roomNumber').value;
+    const intRoomNumber = document.getElementById('roomNumber').value;
     const strId = document.getElementById('customerName').value; 
-    socket.emit('join_room', { roomNumber: roomNumber, strId: strId });
+
+    const divMessagePane = document.getElementById('messages');
+    
+    divMessagePane.innerHTML = '';  // Clear existing messages
+    const divMessage = document.createElement('div');
+    divMessage.classList.add('SingleMessage');
+    divMessage.style.whiteSpace = 'pre-line';
+    divMessage.innerHTML = `<b>LOADING ROOM...</b>`;
+    divMessagePane.appendChild(divMessage);
+    
+    socket.emit('join_room', { intRoomNumber: intRoomNumber, strId: strId });
     //update UI soon
-    console.log(`User ${strId} joined room ${roomNumber}`);
+    console.log(`User ${strId} joined room ${intRoomNumber}`);
 }
 
 function sendMessage() {
     const strId = document.getElementById('customerName').value; // Adjusted to use the correct input ID
     const strUserQuestion = document.getElementById('userMessage').value; // Adjusted to use the correct input ID
-    const roomNumber = document.getElementById('roomNumber').value;
-    console.log('sendMessage() function called ' + strUserQuestion); 
+    const intRoomNumber = document.getElementById('roomNumber').value;
+    const strUserType = document.getElementById('UserType').value;
+    console.log('sendMessage() function called ' + strId + ' ' + strUserQuestion + ' ' + intRoomNumber + ' ' + strUserType); 
     // Clear text area
     document.getElementById("userMessage").value = '';
     // Emit a message to the server
-    socket.emit('send_message', { strId, strUserQuestion, roomNumber });
+    socket.emit('send_message', { strId, strUserQuestion, intRoomNumber, strUserType });
+    socket.emit('ask_llm', { intRoomNumber, strUserQuestion, strUserType });
     // Add functionality to call llm for advice
 }
 
@@ -50,6 +62,20 @@ socket.on('chat_history', (data) => {
         divMessagePane.appendChild(divMessage);
     });
 });
+
+
+socket.on('llm_advise', (data) => {
+    console.log('check llm_advise: ', data);
+    const llmAdvise = data.llm_advise; // Assuming llm_advise is an array of messages
+    const divLLMPane = document.getElementById('advisedResponse');
+    
+    // Clear previous responses
+    divLLMPane.innerHTML = ''; 
+
+    // Display the single LLM advice
+    divLLMPane.innerHTML = `<b>${llmAdvise.dtDate}</b>${llmAdvise.strMessage}`;
+});
+    
 
 // Function to handle pressing enter key
 function handleEnterKey(event) {

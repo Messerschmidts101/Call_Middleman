@@ -105,43 +105,53 @@ input#roomNumber {
 .content {
   display: flex;
   flex-direction: row;
-  padding: 20px;
-  gap: 20px;
+  padding: 1%;
+  gap: 3%;
   height: 85vh; /* Ensure it takes full viewport height */
 }
 
 
 .llm-panel {
-  width: 30%; /* Keep it responsive */
+  flex-grow: 1; /* Keep it responsive */
+  width: 25%;
+  overflow: scroll;
   background-color: #01223a;
   display: flex;
   flex-direction: column;
   align-items: center; /* Center align elements horizontally */
   padding: 2%; /* Reduced padding for tighter layout */
   gap: 2%; /* Reduced gap between elements for less space */
-  overflow: hidden; /* Prevent overflow of child elements */
 }
 
-
-.advised-response-panel {
-  flex-grow: 8.5;
-  display: flex;
-  flex-direction: column;
+.advised-response-panel { /*not this cause expansion; even with max width of 20%, still increasing*/
+  flex-grow: 8.5;             /* Allows it to grow, but will respect width */
+  display: flex;              /* Enable flex layout for child alignment */
+  flex-direction: column;     /* Column direction for child elements */
+  background-color: #f8f8f8;  /* Background color */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); /* Shadow for depth */
+  font-size: 16px;            /* Font size */
+  padding: 15px;              /* Internal padding for content spacing */
+  box-sizing: border-box;      /* Include padding in width calculations */
   width: 100%;
-  background-color: #f8f8f8;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
-  font-size: 16px;
-  padding: 15px; /* Add internal padding for content spacing */
 }
 
-.advised-response-panel-message{
-  flex-grow: 8.5;
+.advised-response-panel-message {/*not this cause expansion; even with max width of 20%, still increasing*/
+  height: 100%;
+  width: 100%;
+}
+
+advisedResponse { /*not this cause expansion; even with max width, still increasing*/
+  width: 100%;
+  max-height: 70%;
+  overflow: scroll;
+
 }
 
 .advised-response-panel-message h3 {
   font-weight: 600;
   margin-bottom: 10px; /* Reduced margin for less space */
 }
+
 
 .file-input-pane {
   display: flex;
@@ -172,18 +182,18 @@ input#roomNumber {
 }
 
 .conversation-panel {
-  flex-grow: 8.5;
+  flex-grow: 10;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   background-color: #fff;
-  padding: 20px;
+  padding: 0%;
   border-radius: 10px;
   box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
 }
 
 .messages {
-  height: 85%;
+  flex-grow: 9;
   max-height: 100vh;
   overflow-y: scroll;
   padding: 5%;
@@ -194,14 +204,13 @@ input#roomNumber {
 }
 
 .message-input {
-  height: 15%;
+  flex-grow: 1;
   display: flex;
   gap: 10px;
 }
 
 textarea#userMessage {
-  width: 80%;
-  height: 60px;
+  flex-grow: 9;
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #e0e0e0;
