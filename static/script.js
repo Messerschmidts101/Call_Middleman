@@ -49,6 +49,8 @@ function sendMessage() {
 socket.on('chat_history', (data) => {
     console.log('check chat_history: ',data)
     const chatHistory = data.chat_history;
+    const strId = document.getElementById('customerName').value; // Adjusted to use the correct input ID
+
     const divMessagePane = document.getElementById('messages');
     
     divMessagePane.innerHTML = '';  // Clear existing messages
@@ -58,6 +60,17 @@ socket.on('chat_history', (data) => {
         const divMessage = document.createElement('div');
         divMessage.classList.add('SingleMessage');
         divMessage.style.whiteSpace = 'pre-line';
+
+        // Assign id based on whether the message user matches the customer name
+        if (strId === msg.strUser) {
+            divMessage.id = 'owner';
+        } else if ('System' == msg.strUser){
+            divMessage.id = 'system';
+        } else {
+            divMessage.id = 'other';
+        }
+
+        // Set the message content
         divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate} </b> <br> ${msg.strMessage}`;
         divMessagePane.appendChild(divMessage);
     });

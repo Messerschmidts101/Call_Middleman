@@ -112,7 +112,7 @@ input#roomNumber {
 
 
 .llm-panel {
-  flex-grow: 1; /* Keep it responsive */
+  flex-grow: 1.5; /* Keep it responsive */
   width: 25%;
   overflow: scroll;
   background-color: #01223a;
@@ -140,7 +140,7 @@ input#roomNumber {
   width: 100%;
 }
 
-advisedResponse { /*not this cause expansion; even with max width, still increasing*/
+.advisedResponse { /*not this cause expansion; even with max width, still increasing*/
   width: 100%;
   max-height: 70%;
   overflow: scroll;
@@ -151,7 +151,6 @@ advisedResponse { /*not this cause expansion; even with max width, still increas
   font-weight: 600;
   margin-bottom: 10px; /* Reduced margin for less space */
 }
-
 
 .file-input-pane {
   display: flex;
@@ -182,25 +181,68 @@ advisedResponse { /*not this cause expansion; even with max width, still increas
 }
 
 .conversation-panel {
-  flex-grow: 10;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  background-color: #fff;
-  padding: 0%;
-  border-radius: 10px;
-  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05);
+  justify-content: flex-start;
+  width: 100%; /* Ensure it spans the full container width */
+  background-color: #fff; /* Use the desired background */
+  overflow: scroll;
 }
 
-.messages {
-  flex-grow: 9;
-  max-height: 100vh;
-  overflow-y: scroll;
-  padding: 5%;
-  border: 1px solid #e0e0e0;
+/* Style for the container that holds all the messages */
+#messages {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;  /* Adds space between each message */
+  max-height: 400px; /* Set a fixed height for the message container */
+  overflow-y: auto;  /* Enable vertical scrolling */
+  padding: 10px;
+  background-color: #f9f9f9; /* Background color for better contrast */
   border-radius: 10px;
-  background-color: #fafafa;
-  margin-bottom: 2%;
+}
+
+/* Common styles for all SingleMessage elements */
+.SingleMessage {
+  max-width: 80%;  /* Limits the width of messages */
+  padding: 10px;
+  border-radius: 10px;
+  margin: 5px 0;
+  word-wrap: break-word;  /* Wrap text if too long */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow for better visibility */
+}
+
+/* Style for owner messages (aligned to the left) */
+#owner {
+  background-color: #e1ffc7;
+  align-self: flex-end;  /* Aligns owner messages to the left */
+  text-align: left;  /* Ensures the text is aligned to the left */
+}
+
+/* Style for other messages (aligned to the right) */
+#other {
+  background-color: #c7d2ff;
+  align-self: flex-start;  /* Aligns other messages to the right */
+  text-align: left;  /* Ensures the text is aligned to the right */
+}
+#system{
+  color: #888;
+  align-self: center;  /* Aligns other messages to the right */
+  text-align: center;  /* Ensures the text is aligned to the right */
+  
+}
+/* Ensure smooth scrolling */
+#messages::-webkit-scrollbar {
+  width: 6px;  /* Customize scrollbar width */
+}
+
+#messages::-webkit-scrollbar-thumb {
+  background-color: #888; /* Customize scrollbar thumb color */
+  border-radius: 3px;
+}
+
+#messages::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Change thumb color on hover */
 }
 
 .message-input {
@@ -257,20 +299,7 @@ textarea#userMessage:focus {
   background-color: #f1f1f1;
 }
 
-.SingleMessage {
-  padding: 10px;            /* Add some padding for spacing */
-  margin-bottom: 10px;      /* Space between messages */
-  border-radius: 5px;       /* Rounded corners */
-  background-color: #dad3d3; /* Background color */
-  box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Shadow for depth */
-  color: #01223a;
-}
 
-/* Optional: Add styles for the username */
-.SingleMessage b {
-  color: #01223a; /* Change the username color */
-  font-size: larger;
-}
 
 .bot {
   align-self: flex-start;
