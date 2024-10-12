@@ -1,0 +1,371 @@
+@import url("https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600&display=swap");
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Raleway", sans-serif;
+}
+
+body {
+  background-color: #cacaca;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1%;
+  max-height: 90%;
+}
+
+#chatroom {
+  width: 100%;
+  max-height: 100vh;
+  max-width: 100vw;
+  background: #fff;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 15px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.header {
+  display: inline-flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #01223a;
+  color: white;
+  padding: 20px;
+}
+
+.logo{
+  flex: 50%;
+}
+.logo h1 {
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.room-info{
+  display: inline-flex;
+}
+.room-info label,
+.room-info input {
+  color: white;
+  font-size: 16px;
+  margin-right: 10px;
+}
+
+
+#UserType {
+  width: 100px; /* Adjust width to your preference */
+  padding: 10px; /* Internal padding for better spacing */
+  border: 2px solid #01223a; /* Border color */
+  border-radius: 5px; /* Rounded corners */
+  background-color: #f8f8f8; /* Light background */
+  color: #01223a; /* Text color */
+  font-size: 10px; /* Text size */
+  appearance: none; /* Remove default arrow */
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http%3A//www.w3.org/2000/svg%22 width%3D%2210%22 height%3D%225%22 viewBox%3D%220 0 10 5%22%3E%3Cpath fill%3D%22%2301223a%22 d%3D%22M0 0l5 5 5-5z%22/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 10px center; /* Arrow positioning */
+  background-size: 10px 5px; /* Arrow size */
+  cursor: pointer; /* Pointer on hover */
+}
+
+/* Hover effect */
+#UserType:hover {
+  border-color: #1d728e;
+}
+
+/* Focus effect */
+#UserType:focus {
+  outline: none;
+  box-shadow: 0 0 5px rgba(29, 114, 142, 0.5); /* Subtle shadow on focus */
+}
+
+/* Style options inside select */
+#UserType option {
+  background-color: #fff; /* White background for options */
+  color: #01223a; /* Text color */
+}
+
+
+input#customerName,
+input#roomNumber {
+  background: none;
+  border: none;
+  border-bottom: 1px solid white;
+  color: white;
+  padding: 5px;
+  width: 100px;
+}
+
+.content {
+  display: flex;
+  flex-direction: row;
+  padding: 1%;
+  gap: 3%;
+  height: 85vh; /* Ensure it takes full viewport height */
+}
+
+
+.llm-panel {
+  flex-grow: 1.5; /* Keep it responsive */
+  width: 25%;
+  overflow: scroll;
+  background-color: #01223a;
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center align elements horizontally */
+  padding: 2%; /* Reduced padding for tighter layout */
+  gap: 2%; /* Reduced gap between elements for less space */
+}
+
+.advised-response-panel { /*not this cause expansion; even with max width of 20%, still increasing*/
+  flex-grow: 8.5;             /* Allows it to grow, but will respect width */
+  display: flex;              /* Enable flex layout for child alignment */
+  flex-direction: column;     /* Column direction for child elements */
+  background-color: #f8f8f8;  /* Background color */
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.05); /* Shadow for depth */
+  font-size: 16px;            /* Font size */
+  padding: 15px;              /* Internal padding for content spacing */
+  box-sizing: border-box;      /* Include padding in width calculations */
+  width: 100%;
+}
+
+.advised-response-panel-message {/*not this cause expansion; even with max width of 20%, still increasing*/
+  height: 100%;
+  width: 100%;
+}
+
+.advisedResponse { /*not this cause expansion; even with max width, still increasing*/
+  width: 100%;
+  max-height: 70%;
+  overflow: scroll;
+
+}
+
+.advised-response-panel-message h3 {
+  font-weight: 600;
+  margin-bottom: 10px; /* Reduced margin for less space */
+}
+
+.file-input-pane {
+  display: flex;
+  flex-direction: row;
+  gap: 5px; /* Reduce the gap between the elements */
+  margin-bottom: 1.5%; /* Reduced bottom margin for less space */
+  width: 100%; /* Make the file input pane take the full width */
+  max-width: 100%; /* Ensure it doesn't exceed the panel width */
+  overflow: hidden; /* Prevent overflow from this pane */
+}
+
+.file-input-pane input[type="file"] {
+  flex: 1; /* Allow the input to take available space */
+  min-width: 0; /* Prevent the input from being too wide */
+  background-color: #fff; /* Set background color for better visibility */
+  border: 1px solid #ccc; /* Add border to the input for visibility */
+  border-radius: 5px; /* Round corners of the input */
+  padding: 5px; /* Add some padding inside the input */
+}
+
+.upload-btn {
+  flex: 0 0 auto; /* Allow button to maintain its size */
+  background-color: #e0e0e0;
+  color: #01223a;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.conversation-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  width: 100%; /* Ensure it spans the full container width */
+  background-color: #fff; /* Use the desired background */
+  overflow: scroll;
+}
+
+/* Style for the container that holds all the messages */
+#messages {
+  flex-grow:10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;  /* Adds space between each message */
+  overflow-y: auto;  /* Enable vertical scrolling */
+  padding: 10px;
+  background-color: #f9f9f9; /* Background color for better contrast */
+  border-radius: 10px;
+}
+
+/* Common styles for all SingleMessage elements */
+.SingleMessage {
+  max-width: 80%;  /* Limits the width of messages */
+  padding: 10px;
+  border-radius: 10px;
+  margin: 5px 0;
+  word-wrap: break-word;  /* Wrap text if too long */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Add shadow for better visibility */
+}
+
+/* Style for owner messages (aligned to the left) */
+#owner {
+  background-color: #e1ffc7;
+  align-self: flex-end;  /* Aligns owner messages to the left */
+  text-align: left;  /* Ensures the text is aligned to the left */
+}
+
+/* Style for other messages (aligned to the right) */
+#other {
+  background-color: #c7d2ff;
+  align-self: flex-start;  /* Aligns other messages to the right */
+  text-align: left;  /* Ensures the text is aligned to the right */
+}
+#system{
+  color: #888;
+  align-self: center;  /* Aligns other messages to the right */
+  text-align: center;  /* Ensures the text is aligned to the right */
+  
+}
+/* Ensure smooth scrolling */
+#messages::-webkit-scrollbar {
+  width: 6px;  /* Customize scrollbar width */
+}
+
+#messages::-webkit-scrollbar-thumb {
+  background-color: #888; /* Customize scrollbar thumb color */
+  border-radius: 3px;
+}
+
+#messages::-webkit-scrollbar-thumb:hover {
+  background-color: #555; /* Change thumb color on hover */
+}
+
+.message-input {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+textarea#userMessage {
+  flex-grow: 20;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #e0e0e0;
+  font-size: 16px;
+  resize: none;
+}
+
+textarea#userMessage:focus {
+  border: 1px solid #1d728e;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+
+.send-btn {
+  flex-grow: 1;
+  padding: 0 15px;
+  background-color: #01223a;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.send-btn:hover {
+  background-color: #01223a;
+}
+
+.send-btn img {
+  width: 20px;
+  height: auto;
+}
+
+/* Scrollbar for message panel */
+.messages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.messages::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 5px;
+}
+
+.messages::-webkit-scrollbar-track {
+  background-color: #f1f1f1;
+}
+
+
+.advised-response-panel-switch{
+  display: flex;
+  flex-direction: row;
+  gap: 2%;
+}
+
+.switch-content{
+  display: flex;
+  justify-content: center;   /* Horizontally center */
+  align-items: center;
+}
+
+/* The switch - the outer container */
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px;
+  height: 34px;
+}
+
+/* The hidden checkbox */
+.switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+/* The slider (the visible part of the switch) */
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: 0.4s;
+  border-radius: 34px;
+}
+
+/* The circle inside the slider */
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px;
+  width: 26px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: 0.4s;
+  border-radius: 50%;
+}
+
+/* When the checkbox is checked */
+input:checked + .slider {
+  background-color: #2196F3;
+}
+
+/* Move the circle to the right when checked */
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+
+/* Optional: Add a shadow effect to the slider */
+.slider {
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.2);
+}
+
