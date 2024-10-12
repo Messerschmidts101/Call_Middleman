@@ -191,11 +191,10 @@ input#roomNumber {
 
 /* Style for the container that holds all the messages */
 #messages {
-  height: 100%;
+  flex-grow:10;
   display: flex;
   flex-direction: column;
   gap: 10px;  /* Adds space between each message */
-  max-height: 400px; /* Set a fixed height for the message container */
   overflow-y: auto;  /* Enable vertical scrolling */
   padding: 10px;
   background-color: #f9f9f9; /* Background color for better contrast */
@@ -248,11 +247,12 @@ input#roomNumber {
 .message-input {
   flex-grow: 1;
   display: flex;
+  flex-direction: row;
   gap: 10px;
 }
 
 textarea#userMessage {
-  flex-grow: 9;
+  flex-grow: 20;
   padding: 10px;
   border-radius: 5px;
   border: 1px solid #e0e0e0;
@@ -266,6 +266,7 @@ textarea#userMessage:focus {
 }
 
 .send-btn {
+  flex-grow: 1;
   padding: 0 15px;
   background-color: #01223a;
   border-radius: 5px;
@@ -299,32 +300,6 @@ textarea#userMessage:focus {
   background-color: #f1f1f1;
 }
 
-
-
-.bot {
-  align-self: flex-start;
-  background-color: #eef4fa;
-}
-
-.user {
-  align-self: flex-end;
-  background-color: #d8e3ea;
-}
-
-@media screen and (max-width: 768px) {
-  .content {
-    flex-direction: column;
-  }
-
-  .advised-response-panel,
-  .conversation-panel {
-    width: 100%;
-  }
-
-  textarea#userMessage {
-    width: 100%;
-  }
-}
 
 .advised-response-panel-switch{
   display: flex;
