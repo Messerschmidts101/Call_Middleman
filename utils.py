@@ -64,7 +64,7 @@ def create_payload_to_room(strUsername,
     if boolPurpose == 1:
         strMessage = f'{strUsername} has joined the room.' 
         strUsername = 'System'
-    elif boolPurpose == 1:
+    elif boolPurpose == 2:
         strMessage = f'{strUsername} has left the room.' 
         strUsername = 'System'
     # datetime object containing current date and time
@@ -166,11 +166,12 @@ def get_llm_advice(tblContextDatabase,
                                 intRetrieverK = 5,
                                 intLLMSetting = 1,
                                 strPromptTemplate = strPromptTemplate)
+        # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
                                                           strOutputPath = None, 
                                                           boolShowSource = True)
-        print("[[VERBOSE]] check llm response here: ", strResponse)
-        print("[[VERBOSE]] check llm reference here: ", strContext)
+        #print("[[VERBOSE]] check llm response here: ", strResponse)
+        #print("[[VERBOSE]] check llm reference here: ", strContext)
         return strResponse,strContext
     else:
         # Do something if no rows matched the filter
@@ -198,11 +199,12 @@ def get_llm_translation(tblContextDatabase,
                                 intRetrieverK = None,
                                 intLLMSetting = 1,
                                 strPromptTemplate = strPromptTemplate)
+        # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
                                                           strOutputPath = None, 
                                                           boolShowSource = True)
-        print("[[VERBOSE]] check llm response here: ", strResponse)
-        print("[[VERBOSE]] check llm reference here: ", strContext)
+        #print("[[VERBOSE]] check llm response here: ", strResponse)
+        #print("[[VERBOSE]] check llm reference here: ", strContext)
         return strResponse,strContext
     else:
         # Do something if no rows matched the filter

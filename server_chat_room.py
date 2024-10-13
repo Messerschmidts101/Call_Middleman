@@ -60,46 +60,55 @@ def handle_message(data):
     strMessage = data['strUserQuestion']
     strUser = data['strId']
     strUserType = data['strUserType']
+    if strUserType.lower() == 'customer':
+        print(F'[[VERBOSE]]: Original customer message: {strMessage}')
+        strMessage = translate_llm(strRoom = strRoom, strMessage = strMessage)
+        print(F'[[VERBOSE]]: Translated customer message: {strMessage}')
     emit_protocol(strUser = strUser,
                   strMessage = strMessage,
                   strRoom = strRoom,
-                  strUserType = strUserType,
                   boolPurpose = 0)
     
 @socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
 def ask_llm(data):
-    global tblContextDatabase
-    print('[[VERBOSE]]: checking context database before asking llm: ')
-    print(tblContextDatabase)
-    strRoom = data['intRoomNumber']
-    strQuestion = data['strUserQuestion']
-    strResponse,strContext = U.get_llm_advice(tblContextDatabase = tblContextDatabase,
-                                                strRoom = strRoom,
-                                                strQuestion = strQuestion)
-    emit_protocol(strUser = None,
-                  strMessage = strResponse,
-                  strRoom = strRoom, 
-                  boolPurpose = 3)
-    
-def translate_llm(strRoom,strMessage):
-    strResponse,strContext = U.get_llm_translation(tblContextDatabase = tblContextDatabase,
-                                                    strRoom = strRoom,
-                                                    strQuestion = strMessage)
-    return strResponse
-
-def emit_protocol(strUser,strMessage,strRoom,strUserType, boolPurpose = 0):
-    global tblChatHistory  # Declare it as global to modify the global variable
+    strUserType = data['strUserType']
     if strUserType.lower() == 'customer':
-        pass
+        global tblContextDatabase
+        strRoom = data['intRoomNumber']
+        strQuestion = data['strUserQuestion']
+        strResponse,strContext = U.get_llm_advice(tblContextDatabase = tblContextDatabase,
+                                                    strRoom = strRoom,
+                                                    strQuestion = strQuestion)
+        emit_protocol(strUser = None,
+                    strMessage = strResponse,
+                    strRoom = strRoom, 
+                    boolPurpose = 3)
+    else:
+        print('[[VERBOSE]] Not a customer user type to generate an llm advise.')
+    
+
+def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
+    '''
+    [[Inputs]]
+        1. strUser = the author of the message.
+        2. strMessage = the message to be sent.
+        3. strRoom = the destination of the message.
+        4. strUserType = the type of user of the author of the message.
+        5. boolPurpose = the purpose of emit: [0] message of the user; [1] notif of joined the room; [2] notif of left the room; [3] the message will be from LLM advise
+    [[Process/Outputs]]
+        This improves basic emit() function by standardizing the emit() processes while still remaining the purpose of sending message to a room.
+    '''
+    global tblChatHistory  # Declare it as global to modify the global variable
+
     if boolPurpose == 0:
         dicPayload = U.create_payload_to_room(strUsername = strUser,
-                                          strRoom = strRoom,
-                                          boolPurpose = 0,
-                                          strMessage = strMessage)
+                                                strRoom = strRoom,
+                                                boolPurpose = 0,
+                                                strMessage = strMessage)
         tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
-                                                            dicPayload = dicPayload)
+                                                                dicPayload = dicPayload)
         tblChatHistoryOfRoom = U.get_chat_history(tblChatHistory = tblChatHistory, 
-                                                strRoom = strRoom)
+                                                    strRoom = strRoom)
         dicPayloadChatHistory = tblChatHistoryOfRoom.to_dict(orient='records')  # 'records' format gives a list of dictionaries
         emit('chat_history', 
             {'chat_history': dicPayloadChatHistory},
@@ -143,8 +152,14 @@ def emit_protocol(strUser,strMessage,strRoom,strUserType, boolPurpose = 0):
 
 def show_chat_history():
     global tblChatHistory
-    print('Updated Chat History')
+    print('[[VERBOSE]] Updated Chat History')
     print(tblChatHistory)
+
+def translate_llm(strRoom,strMessage):
+    strResponse,strContext = U.get_llm_translation(tblContextDatabase = tblContextDatabase,
+                                                    strRoom = strRoom,
+                                                    strQuestion = strMessage)
+    return strResponse
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)  # Added debug=True for development purposes

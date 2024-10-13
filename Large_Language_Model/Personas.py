@@ -18,26 +18,41 @@ Answer:
 """
 
 # Accomplishes #1: Message Processing
-strTemplateTranslateToCalm = """
+strTemplateTranslateToUwU = """
 Translate this customer's message by putting UwU, OwO, or UwO in front of every sentence. In addition, please replace UwU, OwO, UwO, :3, or :D with periods. Your sentences from this point on can only be a maximum of 7 words. Your tone should be in the tone of a 10 year old human:
 {question}
 """
 
+strTemplateTranslateToCalm = """
+Translate this customer's message to calm tone, and separately summarize the message with bullet points:
+{question}
+"""
+
+
 # Accomplishes #2: Response Suggestion
 strTemplateSuggestResponse = """
-Generate a concise customer service response for Inchcape agents. Follow the handbook (<context></context>) and consider the chat history (<chat></chat>).
+Please generate a concise, customer-focused response for Inchcape agents. Use the provided context (<context></context>) and chat history (<chat></chat>) to inform your reply. 
+Make sure the call response is direct and appropriate for live call, do not write it like an email response.
+
 ------
+Chat History:
 <chat>
 {chat_history}
 </chat>
 ------
+Context:
 <context>
 {context}
 </context>
 ------
-Suggest a brief response to:
+Customer Question:
+<question>
 {question}
+</question>
+------
+Provide a brief, actionable response:python test_personas_3.py
 """
+
 
 
 # Accomplishes #3: Contextual Support
