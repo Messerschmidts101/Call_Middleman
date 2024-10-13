@@ -43,25 +43,17 @@
                 <div class="advised-response-panel">
                     <div class="advised-response-panel-message">
                         <h3>🤖 Advised Response:</h3>
-                        <div id="advisedResponse" class="'advisedResponse">
+                        <div id="advisedResponse" class="'advisedResponse"><br>
                             <p>LLM is waiting</p>
-                        </div>
-                    </div>
-                    <div class="advised-response-panel-switch">
-                        <label class="switch">
-                            <input type="checkbox" id="toggleSwitch", onchange="toggleLLMAdvising()">
-                            <span class="slider"></span>
-                        </label>
-                        <div class="switch-content" id="switch-content">
-                            <h4> Toggle LLM Advising </h4>
                         </div>
                     </div>
                 </div>
                 <!-- File Input (For LLM) -->
-                <div class="file-input-pane">
+                <div class="file-input-pane" id="file-input-pane">
                     <input type="file" id="fileInput" />
                     <button class="upload-btn" onclick="uploadFile()">Send</button>
                 </div>
+                <div class="file-status" id="file-status"></div>
             </div>
         <!-- Conversation Panel (Customer-Agent Messages) -->
             <div class="conversation-panel">

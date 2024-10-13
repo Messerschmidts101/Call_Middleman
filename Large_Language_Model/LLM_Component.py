@@ -31,8 +31,6 @@ class LLM:
                  intLLMAccessory = None):
         self.boolCreateDatabase = boolCreateDatabase
         self.strAPIKey = strAPIKey
-        #self.strPromptTemplate = strPromptTemplate
-        #self.strIngestPath = self.check_validity_of_ingest_path(strIngestPath)
         self.strIngestPath = strIngestPath
         self.objEmbeddingModel = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
         self.lisChatHistory = []
@@ -167,7 +165,7 @@ class LLM:
         objEmbeddingChatHistory = self.ingest_chat_history()
         self.objRetrieverChatHistory = objEmbeddingChatHistory.as_retriever(search_kwargs={"k": 5})
         
-    def ingest_context(self):
+    def ingest_context(self,boolReingest = None):
         '''
         This method converts all files in a directory and outputs a Chroma database on the same location.
         This can happen manually or automatically. 
@@ -175,7 +173,7 @@ class LLM:
         You use this method automatically when insantiating this class and 'boolCreateDatabase is' set to True.
         '''
         strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
-        if self.boolCreateDatabase:
+        if self.boolCreateDatabase or boolReingest:
             objLoader = DirectoryLoader(self.strIngestPath, glob="**/*.txt", loader_cls=TextLoader, show_progress=False)
             raw_documents = objLoader.load()
             text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
