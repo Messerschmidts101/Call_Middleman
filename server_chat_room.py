@@ -40,7 +40,7 @@ def on_join(data):
         tblContextDatabase = U.create_llm_to_room(tblContextDatabase = tblContextDatabase,
                             strRoom = strRoom,
                             strPathKnowledgeBaseUser = strPathKnowledgeBaseUser,
-                            strPathKnowledgeBaseMain = strPathKnowledgeBaseMain)
+                            strPathKnowledgeBaseMain = strPathKnowledgeBaseMain) # modify this part soon when uploading file
     emit_protocol(strUser = strUser,
                   strMessage = None,
                   strRoom = strRoom, 
@@ -59,28 +59,38 @@ def handle_message(data):
     strRoom = data['intRoomNumber']
     strMessage = data['strUserQuestion']
     strUser = data['strId']
+    strUserType = data['strUserType']
     emit_protocol(strUser = strUser,
                   strMessage = strMessage,
-                  strRoom = strRoom, 
+                  strRoom = strRoom,
+                  strUserType = strUserType,
                   boolPurpose = 0)
     
-@socketio.on('ask_llm')
+@socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
 def ask_llm(data):
     global tblContextDatabase
     print('[[VERBOSE]]: checking context database before asking llm: ')
     print(tblContextDatabase)
     strRoom = data['intRoomNumber']
     strQuestion = data['strUserQuestion']
-    strResponse,strContext = U.get_llm_response(tblContextDatabase = tblContextDatabase,
+    strResponse,strContext = U.get_llm_advice(tblContextDatabase = tblContextDatabase,
                                                 strRoom = strRoom,
                                                 strQuestion = strQuestion)
     emit_protocol(strUser = None,
                   strMessage = strResponse,
                   strRoom = strRoom, 
                   boolPurpose = 3)
+    
+def translate_llm(strRoom,strMessage):
+    strResponse,strContext = U.get_llm_translation(tblContextDatabase = tblContextDatabase,
+                                                    strRoom = strRoom,
+                                                    strQuestion = strMessage)
+    return strResponse
 
-def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
+def emit_protocol(strUser,strMessage,strRoom,strUserType, boolPurpose = 0):
     global tblChatHistory  # Declare it as global to modify the global variable
+    if strUserType.lower() == 'customer':
+        pass
     if boolPurpose == 0:
         dicPayload = U.create_payload_to_room(strUsername = strUser,
                                           strRoom = strRoom,

@@ -19,7 +19,7 @@ Answer:
 
 # Accomplishes #1: Message Processing
 strTemplateTranslateToCalm = """
-Translate this customer's message into a friendly and approachable tone:
+Translate this customer's message by putting UwU, OwO, or UwO in front of every sentence. In addition, please replace UwU, OwO, UwO, :3, or :D with periods. Your sentences from this point on can only be a maximum of 7 words. Your tone should be in the tone of a 10 year old human:
 {question}
 """
 
