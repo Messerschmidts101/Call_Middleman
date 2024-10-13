@@ -3,7 +3,6 @@ import Large_Language_Model.LLM_Component as LLM_Component
 import Large_Language_Model.Personas as Personas
 import pandas as pd
 import os,shutil
-strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
 
 def create_knowledge_base_path(boolMode = 0):
     if boolMode == 0:
@@ -65,7 +64,7 @@ def create_payload_to_room(strUsername,
     if boolPurpose == 1:
         strMessage = f'{strUsername} has joined the room.' 
         strUsername = 'System'
-    elif boolPurpose == 1:
+    elif boolPurpose == 2:
         strMessage = f'{strUsername} has left the room.' 
         strUsername = 'System'
     # datetime object containing current date and time
@@ -103,7 +102,7 @@ def create_llm_to_room(tblContextDatabase,
         3. strPathKnowledgeBaseUser = the directory path containing specific contexts
         4. strPathKnowledgeBaseMain = the directory path containing general contexts
     [[Process/Outputs]]
-        This creates LLM for a room, it is added as a new row to the table
+        This creates LLM for a room, the new llm is added to the table which you must then access.
     """
     def include_main_knowledge_base(strRoom):
         Path_Target_Directory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
@@ -138,7 +137,7 @@ def get_llm(tblContextDatabase,strRoom):
         1. tblContextDatabase = the pandas table you want to find the llm assigned to the room; each llm in this table has different contexts as it is assigned to different rooms
         2. strRoom = the room identifier for which the LLM is assigned, this is used to see if theres an llm assigned to the room already
     [[Process/Outputs]]
-        This checks if there's an llm already for that room
+        This checks if there's an llm already for that room: return True if already exists, otherwise returns False.
     '''
     tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
     if not tblResult.empty:
@@ -146,7 +145,7 @@ def get_llm(tblContextDatabase,strRoom):
     else:
         return False
 
-def get_llm_response(tblContextDatabase,
+def get_llm_advice(tblContextDatabase,
                      strRoom,
                      strQuestion):
     '''
@@ -155,20 +154,59 @@ def get_llm_response(tblContextDatabase,
         2. strRoom = the room identifier for which the LLM is assigned, this is used to locate the corresponding LLM in the database
         3. strQuestion = the question of customer that the llm will advise response
     [[Process/Outputs]]
-        This asks the llm the appropriate response to a customer's query
+        This asks the llm the appropriate response to a customer's query.
     '''
     tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
     if not tblResult.empty:
         # Get the LLM object
         tempobjLLM = tblResult['objLLM'].iloc[0]
+        # Set the persona to advising
+        strPromptTemplate = Personas.strTemplateSuggestResponse
+        tempobjLLM.create_chain(intLLMAccessory = 3,
+                                intRetrieverK = 5,
+                                intLLMSetting = 1,
+                                strPromptTemplate = strPromptTemplate)
+        # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
                                                           strOutputPath = None, 
                                                           boolShowSource = True)
-        print("[[VERBOSE]] check llm response here: ", strResponse)
-        print("[[VERBOSE]] check llm reference here: ", strContext)
+        #print("[[VERBOSE]] check llm response here: ", strResponse)
+        #print("[[VERBOSE]] check llm reference here: ", strContext)
         return strResponse,strContext
     else:
         # Do something if no rows matched the filter
         print(f"No data found for room: {strRoom}")
         return None,None
 
+def get_llm_translation(tblContextDatabase,
+                        strRoom,
+                        strQuestion):
+    '''
+    [[Inputs]]
+        1. tblContextDatabase = the pandas table you want to find the llm assigned to the room; each llm in this table has different contexts as it is assigned to different rooms
+        2. strRoom = the room identifier for which the LLM is assigned, this is used to locate the corresponding LLM in the database
+        3. strQuestion = the question of customer that the llm will advise response
+    [[Process/Outputs]]
+        This asks the llm to translate the customer's query to something informative and safe.
+    '''
+    tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
+    if not tblResult.empty:
+        # Get the LLM object
+        tempobjLLM = tblResult['objLLM'].iloc[0]
+        # Set the persona to translating
+        strPromptTemplate = Personas.strTemplateTranslateToCalm
+        tempobjLLM.create_chain(intLLMAccessory = 0,
+                                intRetrieverK = None,
+                                intLLMSetting = 1,
+                                strPromptTemplate = strPromptTemplate)
+        # Ask the LLM object
+        strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
+                                                          strOutputPath = None, 
+                                                          boolShowSource = True)
+        #print("[[VERBOSE]] check llm response here: ", strResponse)
+        #print("[[VERBOSE]] check llm reference here: ", strContext)
+        return strResponse,strContext
+    else:
+        # Do something if no rows matched the filter
+        print(f"No data found for room: {strRoom}")
+        return None,None

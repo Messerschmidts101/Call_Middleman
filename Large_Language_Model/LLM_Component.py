@@ -31,7 +31,7 @@ class LLM:
                  intLLMAccessory = None):
         self.boolCreateDatabase = boolCreateDatabase
         self.strAPIKey = strAPIKey
-        self.strPromptTemplate = strPromptTemplate
+        #self.strPromptTemplate = strPromptTemplate
         #self.strIngestPath = self.check_validity_of_ingest_path(strIngestPath)
         self.strIngestPath = strIngestPath
         self.objEmbeddingModel = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
@@ -40,12 +40,14 @@ class LLM:
         self.initialize_llm(intLLMSetting,
                             fltTemperature,
                             intRetrieverK,
-                            intLLMAccessory)
+                            intLLMAccessory,
+                            strPromptTemplate)
 
     def initialize_llm(self, intLLMSetting, 
                        fltTemperature, 
                        intRetrieverK,
-                       intLLMAccessory):
+                       intLLMAccessory,
+                       strPromptTemplate):
         '''
         This method creates LLM with their RAG Chain for this class
         '''
@@ -59,7 +61,18 @@ class LLM:
         strModelName = dictLLMSettings.get(intLLMSetting, None)
         if not strModelName:
             raise ValueError(f"Invalid LLM setting: {intLLMSetting}")
-            #output list of llm settings
+        self.create_llm(intLLMSetting = intLLMSetting,
+                        fltTemperature = fltTemperature,
+                        strModelName = strModelName)
+        boolValidity = self.check_validity_of_settings(intLLMAccessory, strPromptTemplate)
+        if not boolValidity:
+            raise ValueError("Invalid LLM accessory and prompt template combination")
+        self.create_chain(intLLMAccessory = intLLMAccessory,
+                          intRetrieverK = intRetrieverK,
+                          intLLMSetting = intLLMSetting,
+                          strPromptTemplate = strPromptTemplate)
+        
+    def create_llm(self,intLLMSetting,fltTemperature,strModelName):
         if intLLMSetting in [1, 2, 5]: # Groq LLM
             if not self.strAPIKey:
                 raise ValueError(f"Requires API Key, set value of 'strAPIKey'")
@@ -78,14 +91,13 @@ class LLM:
                 temperature = fltTemperature,
                 api_version = "2024-02-01"
             )
-        boolValidity = self.check_validity_of_settings(intLLMAccessory, self.strPromptTemplate)
-        if not boolValidity:
-            raise ValueError("Invalid LLM accessory and prompt template combination")
 
+    def create_chain(self,intLLMAccessory,intRetrieverK,
+                     intLLMSetting,strPromptTemplate):
         if intLLMAccessory > 0:
             if intLLMAccessory == 1:
                 #just context on RAG
-                self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+                self.objPromptTemplate = PromptTemplate(template = strPromptTemplate, 
                                                         input_variables = ["context", "question"])
                 self.objRetrieverContext = self.ingest_context().as_retriever(search_kwargs={"k": intRetrieverK})
                 self.objChain = ({"context": self.objRetrieverContext | self.combine_docs, 
@@ -97,7 +109,7 @@ class LLM:
             elif intLLMAccessory == 3:
                 # Both context and chat history in RAG
                 self.objPromptTemplate = PromptTemplate(
-                    template = self.strPromptTemplate, 
+                    template = strPromptTemplate, 
                     input_variables=["context", "question", "chat_history"]
                 )
                 self.objRetrieverContext = self.ingest_context().as_retriever(search_kwargs={"k": intRetrieverK})
@@ -111,7 +123,7 @@ class LLM:
             else:
                 raise ValueError(f"Invalid LLM Additions: {intLLMSetting}")
         else:
-            self.objPromptTemplate = PromptTemplate(template = self.strPromptTemplate, 
+            self.objPromptTemplate = PromptTemplate(template = strPromptTemplate, 
                                                     input_variables=["question"])
             self.objChain = ({"question": RunnablePassthrough()} | 
                             self.objPromptTemplate | 
