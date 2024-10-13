@@ -87,6 +87,25 @@ def ask_llm(data):
         print('[[VERBOSE]] Not a customer user type to generate an llm advise.')
     
 
+@app.route('/file_upload', methods=['POST']) # cannot be converted to socket protocol
+def handle_file_upload():
+    # Access file from the form data
+    if 'file' not in request.files:
+        return jsonify({'status': 'failure', 'error': 'No file part'})
+
+    file = request.files['file']
+    customer_name = request.form.get('customerName')
+    user_message = request.form.get('userMessage')
+    room_number = request.form.get('roomNumber')
+    user_type = request.form.get('UserType')
+
+    # Process the file (e.g., save it, analyze it, etc.)
+    # Example: Saving the uploaded file
+    file.save(os.path.join(strPathKnowledgeBaseUser,room_number,file.filename)) 
+
+    return jsonify({'status': 'success'})
+
+
 def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
     '''
     [[Inputs]]

@@ -98,56 +98,65 @@ function handleEnterKey(event) {
     }
 }
 
-// Function to handle uploading files (unchanged)
 function uploadFile() {
     const strId = document.getElementById('customerName').value;
+    const strUserQuestion = document.getElementById('userMessage').value;
+    const intRoomNumber = document.getElementById('roomNumber').value;
+    const strUserType = document.getElementById('UserType').value;
     const fileInput = document.getElementById('fileInput');
-    const divMessages = document.getElementById('messages');
-    const formData = new FormData();
-
-    if (fileInput.files.length > 0) {
-        const selectedFile = fileInput.files[0];
-        if (selectedFile.type === 'text/csv' || selectedFile.type === 'text/plain') {
-            formData.append('file', selectedFile);
-        } else {
-            alert('Please select a CSV or TXT file.');
-            return;
-        }
-    } else {
-        alert('Please select a file before uploading.');
+    const divInput = document.getElementById('file-status');
+    const file = fileInput.files[0];
+    
+    divInput.innerHTML = '';  // Clear existing messages
+    
+    if (!file) {
+        alert('Please select a file first.');
         return;
     }
 
-    formData.append('strId', strId);
+    // Inform the user that the upload is starting
+    const divMessage = document.createElement('div');
+    divMessage.classList.add('SingleMessage');
+    divMessage.style.whiteSpace = 'pre-line';
+    divMessage.innerHTML = `<b>UPLOADING FILE TO SERVER</b>`;
+    divInput.appendChild(divMessage);
 
-    const loadingIndicator = document.createElement('div');
-    loadingIndicator.textContent = 'Uploading...';
-    divMessages.appendChild(loadingIndicator);
+    console.log('uploadFile() function called with:', {
+        customerName: strId,
+        userMessage: strUserQuestion,
+        roomNumber: intRoomNumber,
+        userType: strUserType
+    });
 
-    fetch('/upload_file', {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('customerName', strId);
+    formData.append('userMessage', strUserQuestion);
+    formData.append('roomNumber', intRoomNumber);
+    formData.append('UserType', strUserType);
+
+    fetch('/file_upload', {
         method: 'POST',
-        body: formData,
+        body: formData
     })
     .then(response => response.json())
     .then(data => {
-        divMessages.removeChild(loadingIndicator);
-        divMessages.innerHTML += `<div>${data.message}</div>`;
+        console.log('Success:', data);
+        divInput.innerHTML = '';  // Clear existing messages after the upload
+        const divSuccessMessage = document.createElement('div');
+        divSuccessMessage.classList.add('SingleMessage');
+        divSuccessMessage.style.whiteSpace = 'pre-line';
+        divSuccessMessage.innerHTML = `<b>Finished Uploading</b>`;
+        divInput.appendChild(divSuccessMessage);
     })
     .catch(error => {
         console.error('Error:', error);
-        divMessages.removeChild(loadingIndicator);
+        divInput.innerHTML = '';  // Clear existing messages
+        const divErrorMessage = document.createElement('div');
+        divErrorMessage.classList.add('SingleMessage');
+        divErrorMessage.style.whiteSpace = 'pre-line';
+        divErrorMessage.innerHTML = `<b>Upload Failed. Please try again.</b>`;
+        divInput.appendChild(divErrorMessage);
     });
 }
 
-function toggleLLMAdvising() {
-    const checkbox = document.getElementById('toggleSwitch');
-    const heading = document.getElementById('switch-content');
-    
-    if (checkbox.checked) {
-        heading.style.color = '#2196F3';
-        heading.innerHTML = "LLM Advising Is On";
-    } else {
-        heading.style.color = '#000000';
-        heading.innerHTML = "LLM Advising Is Off";
-    }
-}

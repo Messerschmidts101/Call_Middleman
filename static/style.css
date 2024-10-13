@@ -112,7 +112,7 @@ input#roomNumber {
 
 
 .llm-panel {
-  flex-grow: 1.5; /* Keep it responsive */
+  flex-grow: 2; /* Keep it responsive */
   width: 25%;
   overflow: scroll;
   background-color: #01223a;
@@ -124,7 +124,7 @@ input#roomNumber {
 }
 
 .advised-response-panel { /*not this cause expansion; even with max width of 20%, still increasing*/
-  flex-grow: 8.5;             /* Allows it to grow, but will respect width */
+  flex-grow: 16;             /* Allows it to grow, but will respect width */
   display: flex;              /* Enable flex layout for child alignment */
   flex-direction: column;     /* Column direction for child elements */
   background-color: #f8f8f8;  /* Background color */
@@ -153,6 +153,7 @@ input#roomNumber {
 }
 
 .file-input-pane {
+  flex-grow: 2;
   display: flex;
   flex-direction: row;
   gap: 5px; /* Reduce the gap between the elements */
@@ -180,7 +181,14 @@ input#roomNumber {
   transition: background-color 0.3s ease;
 }
 
+.file-status {
+  flex-grow: 1;
+  padding: 0;
+  color: white;
+  font-size: 12px; /* You can adjust the value if needed */
+}
 .conversation-panel {
+  flex-grow: 5;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
