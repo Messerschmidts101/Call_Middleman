@@ -161,7 +161,8 @@ def get_llm_advice(tblContextDatabase,
         # Get the LLM object
         tempobjLLM = tblResult['objLLM'].iloc[0]
         # Set the persona to advising
-        strPromptTemplate = Personas.strTemplateSuggestResponse
+        #strPromptTemplate = Personas.strTemplateSuggestResponse
+        strPromptTemplate = Personas.strTemplateContextResponse
         tempobjLLM.create_chain(intLLMAccessory = 3,
                                 intRetrieverK = 5,
                                 intLLMSetting = 1,
@@ -210,3 +211,29 @@ def get_llm_translation(tblContextDatabase,
         # Do something if no rows matched the filter
         print(f"No data found for room: {strRoom}")
         return None,None
+    
+def create_embeddings_to_room(tblContextDatabase,
+                                strRoom):
+    '''
+    [[Inputs]]
+        1. tblContextDatabase = the pandas table you want to find the llm assigned to the room; each llm in this table has different contexts as it is assigned to different rooms.
+        2. strRoom = the room identifier for which the LLM is assigned, this is used to locate the corresponding LLM in the database.
+    [[Process/Outputs]]
+        This creates the embeddings to a room, this is necessary whenever new contents are to be included in the context of the llm assigned to the room. Outputs boolean based on operation success.
+    '''
+    tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
+    if not tblResult.empty:
+        # Get the LLM object
+        tempobjLLM = tblResult['objLLM'].iloc[0]
+        # Instruct to ingest data
+        # Why create_chain() instead of ingest_context()? This is because the chain needs the output of new chroma as retriever, thus whenever create_chain() is called, the directory is reingested and added to the chain
+        strPromptTemplate = Personas.strTemplateSuggestResponse
+        tempobjLLM.create_chain(intLLMAccessory = 3,
+                                intRetrieverK = 5,
+                                intLLMSetting = 1,
+                                strPromptTemplate = strPromptTemplate)
+        return True
+    else:
+        # Do something if no rows matched the filter
+        print(f"No data found for room: {strRoom}")
+        return False

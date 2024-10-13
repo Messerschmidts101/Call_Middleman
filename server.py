@@ -1,129 +1,186 @@
-"""
-pip install --upgrade mosaicml-cli
-"""
 from flask import Flask, render_template, request, jsonify
-import os
+from flask_socketio import SocketIO, join_room, leave_room, emit
 from dotenv import load_dotenv
-import Large_Language_Model.LLM_Component as LLM_Component
-import Large_Language_Model.Personas as Personas
-import shutil
-########################################
-#####                              #####
-#####           Constants          #####
-#####                              #####
-########################################
+import os
+import utils as U
+
+
+##########################################
+#######                            #######
+#######          Constants         #######
+#######                            #######
+##########################################
 load_dotenv()
-strPromptTemplate = Personas.strPersonaUWU + Personas.strTemplateDefaultConversation 
-"""objLLM = LLM_Component.LLM(intLLMSetting = 1,
-                           strIngestPath = 'Website/Database/Main_Knowledge_Base',
-                           strPromptTemplate = strPromptTemplate,
-                           strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True,
-                           intLLMAccessory = 1)
-"""
-dictDatabase = {
-    "liststrUserId":[],
-    "listobjLLM":[],
-    "liststrUserKnowledgeBasePath":[]
-}
+app = Flask(__name__,template_folder='Website',static_folder='Website/static')
+#app.config['SECRET_KEY'] = 'your_secret_key' ; just for optional cyber-sec purposes to secure session
+socketio = SocketIO(app)
+tblChatHistory = U.create_chat_history_table()
+tblContextDatabase = U.create_context_table()
+strPathKnowledgeBaseUser = U.create_knowledge_base_path(0)
+strPathKnowledgeBaseMain = U.create_knowledge_base_path(1)
 
-# Define the directory to save uploaded files
-Path_User_Knowledge_Base = os.path.join(os.getcwd(), 'Website', 'Database', 'User_Knowledge_Base')
-# Define the directory of the main knowledge base
-Path_Main_Knowledge_Base = os.path.join(os.getcwd(), 'Website', 'Database', 'Main_Knowledge_Base')
-
-########################################
-#####                              #####
-#####           Functions          #####
-#####                              #####
-########################################
-app = Flask(__name__, 
-            template_folder = os.getenv('TEMPLATES_DIR'),
-            static_folder=os.getenv('STATIC_DIR'))
-
+##########################################
+#######                            #######
+#######           Routes           #######
+#######                            #######
+##########################################
 @app.route('/')
 def index():
-    return render_template('index.html')
-
-@app.route('/get_response', methods=['POST'])
-def get_response():
-    # To be completed
-    # Check if user exists
-    dictPayload = request.json
-    strId = dictPayload['strId']
-    intCheckSessionResponse = check_session(strId)
-    if intCheckSessionResponse == 0: # not yet setup
-        return jsonify({'message': "set up conversation id first"})
-    elif intCheckSessionResponse == 1: # already setup 
-        tempobjLLM = dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))]
-        strResponse, strContext = tempobjLLM.get_response(strQuestion = dictPayload['strUserQuestion'], 
-                                                            strOutputPath = None, 
-                                                            boolShowSource = True)
-        print("check response here: ", strResponse)
-        print("check reference here: ", strContext)
-        dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))] = tempobjLLM
-        return jsonify({'strBotResponse': strResponse})
-
-@app.route('/upload_file', methods=['POST'])
-def upload_file():
-    # Check if user exists
-    strId = request.form.get('strId')
-    intCheckSessionResponse = check_session(strId)
-    if intCheckSessionResponse == 0: # not yet setup
-        return jsonify({'message': "set up conversation id first"})
-    elif intCheckSessionResponse == 1: # already setup 
-        # Store the actual file
-        objFile = request.files['file']
-        strUserFolderPath = dictDatabase['liststrUserKnowledgeBasePath'][(dictDatabase['liststrUserId'].index(strId))]
-        objFile.save(os.path.join(strUserFolderPath, objFile.filename))
-        # Instruct the LLM to re-injest the user directory
-        print("checking database:", dictDatabase)
-        tempobjLLM = dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))]
-        tempPathUser = os.path.join(Path_User_Knowledge_Base, strId)
-        tempobjLLM.objEmbedding = tempobjLLM.ingest_context(tempPathUser)
-        dictDatabase['listobjLLM'][(dictDatabase['liststrUserId'].index(strId))] = tempobjLLM
-        # Return success
-        return jsonify({'message': "file uploaded successfully"})
+    return render_template('chat.html')  
+@socketio.on('join_room')
+def on_join(data):
+    global tblContextDatabase
+    strUser = data['strId']
+    strRoom = data['intRoomNumber']
+    join_room(strRoom)
+    if U.get_llm(tblContextDatabase = tblContextDatabase,
+                 strRoom = strRoom):
+        pass # nothing happens really as there is an llm already created
+    else:
+        tblContextDatabase = U.create_llm_to_room(tblContextDatabase = tblContextDatabase,
+                            strRoom = strRoom,
+                            strPathKnowledgeBaseUser = strPathKnowledgeBaseUser,
+                            strPathKnowledgeBaseMain = strPathKnowledgeBaseMain) # modify this part soon when uploading file
+    emit_protocol(strUser = strUser,
+                  strMessage = None,
+                  strRoom = strRoom, 
+                  boolPurpose = 1)
+@socketio.on('leave_room') # shit needs improvement
+def on_leave(data):
+    strUser = data['strId']
+    strRoom = data['intRoomNumber']
+    leave_room(strRoom)
+    emit_protocol(strUser = strUser,
+                  strMessage = None,
+                  strRoom = strRoom, 
+                  boolPurpose = 2)
+@socketio.on('send_message')
+def handle_message(data):
+    strRoom = data['intRoomNumber']
+    strMessage = data['strUserQuestion']
+    strUser = data['strId']
+    strUserType = data['strUserType']
+    if strUserType.lower() == 'customer':
+        print(F'[[VERBOSE]]: Original customer message: {strMessage}')
+        strMessage = translate_llm(strRoom = strRoom, strMessage = strMessage)
+        print(F'[[VERBOSE]]: Translated customer message: {strMessage}')
+    emit_protocol(strUser = strUser,
+                  strMessage = strMessage,
+                  strRoom = strRoom,
+                  boolPurpose = 0)
     
-def setup_session(strId):
-    '''
-    Adds conversation id to the database
-    '''
-    def include_main_knowledge_base(strId):
-        Path_Target_Directory =  os.path.join(Path_User_Knowledge_Base, strId)
-        shutil.copytree(Path_Main_Knowledge_Base, Path_Target_Directory,dirs_exist_ok=True)
-
-    # Create a directory based on strId
-    strUserFolderPath = os.path.join(Path_User_Knowledge_Base, strId)
-    os.makedirs(strUserFolderPath, exist_ok=True)
-    include_main_knowledge_base(strId)
-
-    # Create LLM
-    Path_Target_Directory =  os.path.join(Path_User_Knowledge_Base, strId)
-    objLLM = LLM_Component.LLM(intLLMSetting = 1,
-                           strIngestPath = Path_Target_Directory,
-                           strPromptTemplate = Personas.strTemplateSuggestResponse,
-                           strAPIKey = os.getenv('GROQ_KEY'),
-                           boolCreateDatabase = True,
-                           intLLMAccessory = 3)
+@socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
+def ask_llm(data):
+    strUserType = data['strUserType']
+    if strUserType.lower() == 'customer':
+        global tblContextDatabase
+        strRoom = data['intRoomNumber']
+        strQuestion = data['strUserQuestion']
+        strResponse,strContext = U.get_llm_advice(tblContextDatabase = tblContextDatabase,
+                                                    strRoom = strRoom,
+                                                    strQuestion = strQuestion)
+        emit_protocol(strUser = None,
+                    strMessage = strResponse,
+                    strRoom = strRoom, 
+                    boolPurpose = 3)
+    else:
+        print('[[VERBOSE]] Not a customer user type to generate an llm advise.')
     
-    dictDatabase['liststrUserId'].append(strId)
-    dictDatabase['listobjLLM'].append(objLLM)
-    dictDatabase['liststrUserKnowledgeBasePath'].append(Path_Target_Directory)
-    return 1
 
-def check_session(strId):
+@app.route('/file_upload', methods=['POST']) # cannot be converted to socket protocol
+def handle_file_upload():
+    global tblContextDatabase
+    # Access file from the form data
+    if 'file' not in request.files:
+        return jsonify({'status': 'failure', 'error': 'No file part'})
+
+    file = request.files['file']
+    customer_name = request.form.get('customerName')
+    user_message = request.form.get('userMessage')
+    room_number = request.form.get('roomNumber')
+    user_type = request.form.get('UserType')
+
+    # Process the file 
+    file.save(os.path.join(strPathKnowledgeBaseUser,room_number,file.filename)) 
+    U.create_embeddings_to_room(tblContextDatabase = tblContextDatabase,
+                                strRoom = room_number)
+
+    return jsonify({'status': 'success'})
+
+
+def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
     '''
-    Check if user has set up conversation id
+    [[Inputs]]
+        1. strUser = the author of the message.
+        2. strMessage = the message to be sent.
+        3. strRoom = the destination of the message.
+        4. strUserType = the type of user of the author of the message.
+        5. boolPurpose = the purpose of emit: [0] message of the user; [1] notif of joined the room; [2] notif of left the room; [3] the message will be from LLM advise
+    [[Process/Outputs]]
+        This improves basic emit() function by standardizing the emit() processes while still remaining the purpose of sending message to a room.
     '''
-    print("check strId here: ", strId)
-    if strId is None or strId.strip() == '':
-        return 0
-    elif strId not in dictDatabase['liststrUserId']:
-        return setup_session(strId)
-    elif strId in dictDatabase['liststrUserId']:
-        return 1
-        
+    global tblChatHistory  # Declare it as global to modify the global variable
+
+    if boolPurpose == 0:
+        dicPayload = U.create_payload_to_room(strUsername = strUser,
+                                                strRoom = strRoom,
+                                                boolPurpose = 0,
+                                                strMessage = strMessage)
+        tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
+                                                                dicPayload = dicPayload)
+        tblChatHistoryOfRoom = U.get_chat_history(tblChatHistory = tblChatHistory, 
+                                                    strRoom = strRoom)
+        dicPayloadChatHistory = tblChatHistoryOfRoom.to_dict(orient='records')  # 'records' format gives a list of dictionaries
+        emit('chat_history', 
+            {'chat_history': dicPayloadChatHistory},
+            room = strRoom)
+    elif boolPurpose == 1:
+        dicPayload = U.create_payload_to_room(strUsername = strUser,
+                                          strRoom = strRoom,
+                                          boolPurpose = 1,
+                                          strMessage = None)
+        tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
+                                                            dicPayload = dicPayload)
+        tblChatHistoryOfRoom = U.get_chat_history(tblChatHistory = tblChatHistory, 
+                                                strRoom = strRoom)
+        dicPayloadChatHistory = tblChatHistoryOfRoom.to_dict(orient='records')  # 'records' format gives a list of dictionaries
+        emit('chat_history', 
+            {'chat_history': dicPayloadChatHistory},
+            room = strRoom)
+    elif boolPurpose == 2:
+        dicPayload = U.create_payload_to_room(strUsername = strUser,
+                                          strRoom = strRoom,
+                                          boolPurpose = 2,
+                                          strMessage = None)
+        tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
+                                                            dicPayload = dicPayload)
+        tblChatHistoryOfRoom = U.get_chat_history(tblChatHistory = tblChatHistory, 
+                                                strRoom = strRoom)
+        dicPayloadChatHistory = tblChatHistoryOfRoom.to_dict(orient='records')  # 'records' format gives a list of dictionaries
+        emit('chat_history', 
+            {'chat_history': dicPayloadChatHistory},
+            room = strRoom)
+    elif boolPurpose == 3:
+        dicPayload = U.create_payload_to_room(strUsername = 'LLM Advisor',
+                                                strRoom = strRoom,
+                                                boolPurpose = 0,
+                                                strMessage = strMessage)
+       
+        emit('llm_advise', 
+            {'llm_advise': dicPayload},
+            room = strRoom)
+    show_chat_history()
+
+def show_chat_history():
+    global tblChatHistory
+    print('[[VERBOSE]] Updated Chat History')
+    print(tblChatHistory)
+
+def translate_llm(strRoom,strMessage):
+    strResponse,strContext = U.get_llm_translation(tblContextDatabase = tblContextDatabase,
+                                                    strRoom = strRoom,
+                                                    strQuestion = strMessage)
+    return strResponse
+
 if __name__ == '__main__':
-    extra_dirs = ['confluence_chatbot/User_Knowledge_Base']
-    app.run(debug=True, use_reloader=False, extra_files=extra_dirs)
+    socketio.run(app, debug=True)  # Added debug=True for development purposes

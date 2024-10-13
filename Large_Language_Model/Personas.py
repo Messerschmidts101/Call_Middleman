@@ -50,9 +50,28 @@ Customer Question:
 {question}
 </question>
 ------
-Provide a brief, actionable response:python test_personas_3.py
+Provide a brief, actionable response:
 """
 
-
-
 # Accomplishes #3: Contextual Support
+
+strTemplateContextResponse = """
+Use the provided context (<context></context>) and chat history (<chat></chat>) to inform your reply. 
+------
+Chat History:
+<chat>
+{chat_history}
+</chat>
+------
+Context:
+<context>
+{context}
+</context>
+------
+Question:
+<question>
+{question}
+</question>
+------
+Provide a brief answer:
+"""
