@@ -3,6 +3,13 @@ from flask_socketio import SocketIO, join_room, leave_room, emit
 from dotenv import load_dotenv
 import os
 import utils as U
+import base64
+import speech_recognition as sr
+import subprocess
+
+# socket vs flask
+# socket is for transmit data in real time
+# flask is for transmit big data not real time; updating requires reloading of web page to appear
 
 
 ##########################################
@@ -18,6 +25,8 @@ tblChatHistory = U.create_chat_history_table()
 tblContextDatabase = U.create_context_table()
 strPathKnowledgeBaseUser = U.create_knowledge_base_path(0)
 strPathKnowledgeBaseMain = U.create_knowledge_base_path(1)
+objAudioTranscriber = sr.Recognizer()
+
 
 ##########################################
 #######                            #######
@@ -86,7 +95,6 @@ def ask_llm(data):
     else:
         print('[[VERBOSE]] Not a customer user type to generate an llm advise.')
     
-
 @app.route('/file_upload', methods=['POST']) # cannot be converted to socket protocol
 def handle_file_upload():
     global tblContextDatabase
@@ -106,7 +114,34 @@ def handle_file_upload():
                                 strRoom = room_number)
 
     return jsonify({'status': 'success'})
+@app.route('/upload_audio', methods=['POST'])
+def upload_audio():
+    # Access the audio file from the event data
+    if 'audio' not in request.files:
+        return jsonify({'error': 'No audio file provided'}), 400
 
+    objAudioFile = request.files['audio']
+    strRoom = request.form.get('strRoom')
+
+    # Save the audio file to disk
+    objAudio = objAudioFile.read()
+    strAudioFilePath = os.path.join(strPathKnowledgeBaseUser,strRoom, 'audio.wav')
+    strAudioFilePath1 = os.path.join(strAudioFilePath,'temp')
+    objAudioFile.save(strAudioFilePath)
+
+    subprocess.run(['ffmpeg', '-i', strAudioFilePath1, '-ar', '16000', '-ac', '1', strAudioFilePath], check=True)
+    
+    # Transcribe the audio file using the speech recognition library
+    try:
+        with sr.AudioFile(strAudioFilePath) as source:
+            objAudio = objAudioTranscriber.record(source)  # Record the entire audio file
+            # Try recognizing the speech from the audio file
+            strTranscriptResult = objAudioTranscriber.recognize_google(objAudio)
+            print('[[VERBOSE]] Check transcript here: ', strTranscriptResult)
+            return jsonify({'transcription': strTranscriptResult}), 200
+    except Exception as e:
+        # API unreachable or request failed
+        return jsonify({'error': f'API unavailable: {str(e)}'}), 500
 
 def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
     '''

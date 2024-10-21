@@ -168,3 +168,85 @@ function uploadFile() {
     });
 }
 
+/* =================================================*/
+/* =============== FOR SENDING AUDIO ===============*/
+/* =================================================*/
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false; // Add a state variable to track recording status
+
+// Function to start recording
+function startRecording() {
+    if (isRecording) return; // Prevent starting a new recording if one is already in progress
+
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.start();
+            isRecording = true; // Set the state to recording
+            console.log("Recording started");
+        })
+        .catch(error => {
+            console.error('Error accessing microphone: ', error);
+        });
+}
+
+// Function to stop recording and send audio to the server
+function stopRecording() {
+    if (!isRecording) return; // Prevent stopping if not currently recording
+
+    mediaRecorder.stop();
+    mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        audioChunks = []; // Clear the chunks after stopping
+        
+        // Send the audioBlob to the server
+        sendAudioMessage(audioBlob);
+        console.log("Recording stopped and sent");
+        isRecording = false; // Reset the state after stopping
+    };
+}
+
+// Function to send the audio file to the server
+function sendAudioMessage(audioBlob) {
+    const intRoomNumber = document.getElementById('roomNumber').value;
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    formData.append('strRoom',intRoomNumber)
+
+    fetch('/upload_audio', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Event listeners for pressing and releasing the spacebar
+window.addEventListener('keydown', function(event) {
+    if (event.code === 'Space') {
+        event.preventDefault();
+        startRecording(); // Start recording when space is pressed
+    }
+});
+
+window.addEventListener('keyup', function(event) {
+    if (event.code === 'Space') {
+        event.preventDefault();
+        stopRecording(); // Stop recording when space is released
+    }
+});
+
+
+/* =====================================================*/
+/* =============== END FOR SENDING AUDIO ===============*/
+/* =====================================================*/

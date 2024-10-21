@@ -65,7 +65,10 @@
                 <div class="message-input">
                 <textarea id="userMessage" placeholder="Enter your message..." onkeydown="handleEnterKey(event)"></textarea>
                 <button class="send-btn" onclick="sendMessage()">
-                    <img src="{{ url_for('static', filename='send-icon.svg') }}" alt="Send" />
+                    <img src="{{ url_for('static', filename='send-icon.svg') }}" alt="Send Text" />
+                </button>
+                <button class="send-btn" onclick="sendAudio()" id="sendAudio">
+                    <img src="{{ url_for('static', filename='microphone-icon.svg') }}" alt="Send Audio" />
                 </button>
                 </div>
             </div>
