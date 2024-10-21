@@ -116,32 +116,55 @@ def handle_file_upload():
     return jsonify({'status': 'success'})
 @app.route('/upload_audio', methods=['POST'])
 def upload_audio():
-    # Access the audio file from the event data
+    # Step 1: Access the audio file from the event data
     if 'audio' not in request.files:
         return jsonify({'error': 'No audio file provided'}), 400
-
     objAudioFile = request.files['audio']
     strRoom = request.form.get('strRoom')
 
-    # Save the audio file to disk
-    objAudio = objAudioFile.read()
+    # Step 2: Save the audio file to disk
     strAudioFilePath = os.path.join(strPathKnowledgeBaseUser,strRoom, 'audio.wav')
-    strAudioFilePath1 = os.path.join(strAudioFilePath,'temp')
-    objAudioFile.save(strAudioFilePath)
-
-    subprocess.run(['ffmpeg', '-i', strAudioFilePath1, '-ar', '16000', '-ac', '1', strAudioFilePath], check=True)
-    
-    # Transcribe the audio file using the speech recognition library
+    strConvertedAudioFilePath = os.path.join(strPathKnowledgeBaseUser,strRoom, 'converted_audio.wav')
+    print(f'[[VERBOSE]] Check file paths of audio here: \n[1]{strAudioFilePath}\n[2]{strConvertedAudioFilePath}')
     try:
-        with sr.AudioFile(strAudioFilePath) as source:
-            objAudio = objAudioTranscriber.record(source)  # Record the entire audio file
-            # Try recognizing the speech from the audio file
-            strTranscriptResult = objAudioTranscriber.recognize_google(objAudio)
-            print('[[VERBOSE]] Check transcript here: ', strTranscriptResult)
-            return jsonify({'transcription': strTranscriptResult}), 200
+            
+        with open(strAudioFilePath, 'wb') as f:
+            f.write(objAudioFile.read())
+
+        # Check if the raw audio file was created successfully
+        if os.path.exists(strAudioFilePath):
+            print(f"Raw audio file saved at: {strAudioFilePath}, Size: {os.path.getsize(strAudioFilePath)} bytes")
+        else:
+            print(f"Raw audio file not found after saving at: {strAudioFilePath}")
+
+        # Convert the audio to PCM WAV using ffmpeg; necessary for transcriber 
+        # problem is this, ffmpeg not working
+        subprocess.run(['ffmpeg', '-i', strAudioFilePath, '-ar', '16000', '-ac', '1', strConvertedAudioFilePath], check=True)
+
+        # Check if the converted audio file was created successfully
+        if os.path.exists(strConvertedAudioFilePath):
+            intAudioFileSize = os.path.getsize(strConvertedAudioFilePath)
+            print(f"Converted audio file saved at: {strConvertedAudioFilePath}, Size: {intAudioFileSize} bytes")
+        else:
+            print(f"Converted audio file not found at: {strConvertedAudioFilePath}")
+
     except Exception as e:
-        # API unreachable or request failed
-        return jsonify({'error': f'API unavailable: {str(e)}'}), 500
+        print(f'Failed to save audio: {str(e)}')
+        return jsonify({'error': f'Failed to save audio: {str(e)}'}), 500
+    
+    # Step 3: Transcribe the audio file using the speech recognition library
+    try:
+        with sr.AudioFile(strConvertedAudioFilePath) as source:
+            objAudio = objAudioTranscriber.record(source)  # Read the entire audio file
+        strTranscriptResult = objAudioTranscriber.recognize_google(objAudio)
+        print('[[VERBOSE]] Check transcript here: ', strTranscriptResult)
+        return jsonify({'transcription': strTranscriptResult}), 200
+    except sr.UnknownValueError:
+        print(f'Failed to transcribe audio: {str(e)}')
+        return jsonify({'error': 'Google Speech Recognition could not understand audio'}), 500
+
+
+
 
 def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
     '''

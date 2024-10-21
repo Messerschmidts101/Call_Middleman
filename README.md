@@ -13,6 +13,10 @@ A middleman solution for call centers that facilitates communication between age
 
 
 # Requirements
+## Install FFMPEG for server; this is used to convert audio files for speech recognition compatability
+1. Download full build https://github.com/GyanD/codexffmpeg/releases/tag/2024-10-21-git-baa23e40c1
+2. Extract file
+3. Add .exe to PATH variable
 ## Running VENV using Powershell
 1. python -m venv venv
 2. Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser

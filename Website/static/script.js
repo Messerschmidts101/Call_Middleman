@@ -174,12 +174,19 @@ function uploadFile() {
 
 let mediaRecorder;
 let audioChunks = [];
-let isRecording = false; // Add a state variable to track recording status
+let isRecording = false; // State variable to track recording status
+
+// Function to toggle between start and stop recording
+function toggleRecording() {
+    if (!isRecording) {
+        startRecording(); // Start recording if not already recording
+    } else {
+        stopRecording(); // Stop recording if it's already in progress
+    }
+}
 
 // Function to start recording
 function startRecording() {
-    if (isRecording) return; // Prevent starting a new recording if one is already in progress
-
     navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
             mediaRecorder = new MediaRecorder(stream);
@@ -188,6 +195,7 @@ function startRecording() {
             };
             mediaRecorder.start();
             isRecording = true; // Set the state to recording
+            updateRecordingStatus("Recording..."); // Update button text to show status
             console.log("Recording started");
         })
         .catch(error => {
@@ -202,10 +210,12 @@ function stopRecording() {
     mediaRecorder.stop();
     mediaRecorder.onstop = () => {
         const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        console.log('Audio Blob size:', audioBlob.size);  // Check Blob size
         audioChunks = []; // Clear the chunks after stopping
         
         // Send the audioBlob to the server
         sendAudioMessage(audioBlob);
+        updateRecordingStatus("Start Recording"); // Reset button text after stopping
         console.log("Recording stopped and sent");
         isRecording = false; // Reset the state after stopping
     };
@@ -213,10 +223,11 @@ function stopRecording() {
 
 // Function to send the audio file to the server
 function sendAudioMessage(audioBlob) {
+    console.log('Sending audioBlob size:', audioBlob.size);  // Check size before sending
     const intRoomNumber = document.getElementById('roomNumber').value;
     const formData = new FormData();
     formData.append('audio', audioBlob);
-    formData.append('strRoom',intRoomNumber)
+    formData.append('strRoom', intRoomNumber);
 
     fetch('/upload_audio', {
         method: 'POST',
@@ -231,22 +242,11 @@ function sendAudioMessage(audioBlob) {
     });
 }
 
-// Event listeners for pressing and releasing the spacebar
-window.addEventListener('keydown', function(event) {
-    if (event.code === 'Space') {
-        event.preventDefault();
-        startRecording(); // Start recording when space is pressed
-    }
-});
-
-window.addEventListener('keyup', function(event) {
-    if (event.code === 'Space') {
-        event.preventDefault();
-        stopRecording(); // Stop recording when space is released
-    }
-});
-
-
+// Function to update recording button status
+function updateRecordingStatus(text) {
+    const statusSpan = document.getElementById('recordingStatus');
+    statusSpan.textContent = text;
+}
 /* =====================================================*/
 /* =============== END FOR SENDING AUDIO ===============*/
 /* =====================================================*/
