@@ -139,7 +139,7 @@ def upload_audio():
 
         # Convert the audio to PCM WAV using ffmpeg; necessary for transcriber 
         # problem is this, ffmpeg not working
-        subprocess.run(['ffmpeg', '-i', strAudioFilePath, '-ar', '16000', '-ac', '1', strConvertedAudioFilePath], check=True)
+        subprocess.run(['ffmpeg','-y', '-i', strAudioFilePath, '-ar', '16000', '-ac', '1', strConvertedAudioFilePath], check=True)
 
         # Check if the converted audio file was created successfully
         if os.path.exists(strConvertedAudioFilePath):
