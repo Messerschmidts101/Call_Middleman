@@ -225,9 +225,13 @@ function stopRecording() {
 function sendAudioMessage(audioBlob) {
     console.log('Sending audioBlob size:', audioBlob.size);  // Check size before sending
     const intRoomNumber = document.getElementById('roomNumber').value;
+    const strId = document.getElementById('customerName').value; 
+    const strUserType = document.getElementById('UserType').value;
     const formData = new FormData();
     formData.append('audio', audioBlob);
     formData.append('strRoom', intRoomNumber);
+    formData.append('strUserType', strUserType);
+    formData.append('strId', strId);
 
     fetch('/upload_audio', {
         method: 'POST',
@@ -236,6 +240,16 @@ function sendAudioMessage(audioBlob) {
     .then(response => response.json())
     .then(data => {
         console.log('Success:', data);
+        // Call handle_message with the transcript result
+        console.log('success transcript');
+        const dicPayload = {
+            intRoomNumber: intRoomNumber,
+            strUserQuestion: data.message, // This is the transcript
+            strId: strId,
+            strUserType: strUserType,
+        };
+        // Emit the message to the server
+        socket.emit('send_message', dicPayload);
     })
     .catch(error => {
         console.error('Error:', error);

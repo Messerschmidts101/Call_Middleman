@@ -3,9 +3,6 @@ from flask_socketio import SocketIO, join_room, leave_room, emit
 from dotenv import load_dotenv
 import os
 import utils as U
-import base64
-import speech_recognition as sr
-import subprocess
 
 # socket vs flask
 # socket is for transmit data in real time
@@ -25,7 +22,7 @@ tblChatHistory = U.create_chat_history_table()
 tblContextDatabase = U.create_context_table()
 strPathKnowledgeBaseUser = U.create_knowledge_base_path(0)
 strPathKnowledgeBaseMain = U.create_knowledge_base_path(1)
-objAudioTranscriber = sr.Recognizer()
+objAudioTranscriber = U.create_audio_transcriber()
 
 
 ##########################################
@@ -54,6 +51,7 @@ def on_join(data):
                   strMessage = None,
                   strRoom = strRoom, 
                   boolPurpose = 1)
+    
 @socketio.on('leave_room') # shit needs improvement
 def on_leave(data):
     strUser = data['strId']
@@ -63,12 +61,15 @@ def on_leave(data):
                   strMessage = None,
                   strRoom = strRoom, 
                   boolPurpose = 2)
+    
 @socketio.on('send_message')
 def handle_message(data):
     strRoom = data['intRoomNumber']
     strMessage = data['strUserQuestion']
     strUser = data['strId']
     strUserType = data['strUserType']
+    
+    #print(f'[[VERBOSE]] Sending from audio: \n{strRoom}\n{strMessage}\n{strUser}\n{strUserType}')
     if strUserType.lower() == 'customer':
         print(F'[[VERBOSE]]: Original customer message: {strMessage}')
         strMessage = translate_llm(strRoom = strRoom, strMessage = strMessage)
@@ -77,6 +78,38 @@ def handle_message(data):
                   strMessage = strMessage,
                   strRoom = strRoom,
                   boolPurpose = 0)
+
+@app.route('/upload_audio', methods=['POST'])
+def convert_audio_to_text_message():
+    # Step 1: Get data and audio
+    objAudioFile = request.files['audio']
+    strRoom = request.form.get('strRoom')
+    strUser = request.form.get('strId')
+    strUserType = request.form.get('strUserType')
+
+    # Step 2: Get transcription of audio
+    strTranscriptResult = U.create_transcript_to_room(strRoom = strRoom, 
+                                                objAudioFile = objAudioFile,
+                                                objAudioTranscriber = objAudioTranscriber,
+                                                boolVerbose = True)
+    
+    # as much as we want to call handle_message by emit or by direct function call, it wouldnt work because youre calling socketio from app route, thus communication wont trigger, thus instead the solution is to pass the transcript back to client, then from client call handle_message passing the transcript 
+    return jsonify({'status': 'success trancription', 'message': strTranscriptResult}), 200
+    '''
+    # Step 3: Pass transcription as text
+    dicPayload = {
+        'intRoomNumber':strRoom,
+        'strUserQuestion':strTranscriptResult,
+        'strId':strUser,
+        'strUserType':strUserType,
+    }
+
+    # Call handle_message() using socketio.emit at send_message route because it will not work if handle_message() is just called.
+    #socketio.emit('send_message', dicPayload)
+
+    handle_message(dicPayload)
+    # Return a success response aparently required
+    return jsonify({'status': 'success trancription', 'message': 'Audio uploaded and message sent successfully'}), 200'''
     
 @socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
 def ask_llm(data):
@@ -114,57 +147,6 @@ def handle_file_upload():
                                 strRoom = room_number)
 
     return jsonify({'status': 'success'})
-@app.route('/upload_audio', methods=['POST'])
-def upload_audio():
-    # Step 1: Access the audio file from the event data
-    if 'audio' not in request.files:
-        return jsonify({'error': 'No audio file provided'}), 400
-    objAudioFile = request.files['audio']
-    strRoom = request.form.get('strRoom')
-
-    # Step 2: Save the audio file to disk
-    strAudioFilePath = os.path.join(strPathKnowledgeBaseUser,strRoom, 'audio.wav')
-    strConvertedAudioFilePath = os.path.join(strPathKnowledgeBaseUser,strRoom, 'converted_audio.wav')
-    print(f'[[VERBOSE]] Check file paths of audio here: \n[1]{strAudioFilePath}\n[2]{strConvertedAudioFilePath}')
-    try:
-            
-        with open(strAudioFilePath, 'wb') as f:
-            f.write(objAudioFile.read())
-
-        # Check if the raw audio file was created successfully
-        if os.path.exists(strAudioFilePath):
-            print(f"Raw audio file saved at: {strAudioFilePath}, Size: {os.path.getsize(strAudioFilePath)} bytes")
-        else:
-            print(f"Raw audio file not found after saving at: {strAudioFilePath}")
-
-        # Convert the audio to PCM WAV using ffmpeg; necessary for transcriber 
-        # problem is this, ffmpeg not working
-        subprocess.run(['ffmpeg','-y', '-i', strAudioFilePath, '-ar', '16000', '-ac', '1', strConvertedAudioFilePath], check=True)
-
-        # Check if the converted audio file was created successfully
-        if os.path.exists(strConvertedAudioFilePath):
-            intAudioFileSize = os.path.getsize(strConvertedAudioFilePath)
-            print(f"Converted audio file saved at: {strConvertedAudioFilePath}, Size: {intAudioFileSize} bytes")
-        else:
-            print(f"Converted audio file not found at: {strConvertedAudioFilePath}")
-
-    except Exception as e:
-        print(f'Failed to save audio: {str(e)}')
-        return jsonify({'error': f'Failed to save audio: {str(e)}'}), 500
-    
-    # Step 3: Transcribe the audio file using the speech recognition library
-    try:
-        with sr.AudioFile(strConvertedAudioFilePath) as source:
-            objAudio = objAudioTranscriber.record(source)  # Read the entire audio file
-        strTranscriptResult = objAudioTranscriber.recognize_google(objAudio)
-        print('[[VERBOSE]] Check transcript here: ', strTranscriptResult)
-        return jsonify({'transcription': strTranscriptResult}), 200
-    except sr.UnknownValueError:
-        print(f'Failed to transcribe audio: {str(e)}')
-        return jsonify({'error': 'Google Speech Recognition could not understand audio'}), 500
-
-
-
 
 def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
     '''
