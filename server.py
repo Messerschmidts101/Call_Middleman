@@ -223,4 +223,4 @@ def translate_llm(strRoom,strMessage):
     return strResponse
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)  # Added debug=True for development purposes
+    socketio.run(app, debug=True, host='192.168.1.8')  # Added debug=True for development purposes, host is required so that mobile device can access it; host is ipv4 address of server

@@ -1,5 +1,6 @@
-document.getElementById('UserType').addEventListener('change', function() {
-    const selectedUserType = this.value;
+
+document.body.addEventListener('click', function() {
+    const selectedUserType = document.getElementById('UserType').value;
     const llmPanel = document.querySelector('.llm-panel'); // Select the llm-panel
 
     if (selectedUserType === "Customer") {
@@ -9,8 +10,7 @@ document.getElementById('UserType').addEventListener('change', function() {
       // Show the llm-panel when "Agent" is selected
       llmPanel.style.display = 'flex';
     }
-  });
-
+});
 
 const socket = io(); 
 
@@ -72,10 +72,11 @@ socket.on('chat_history', (data) => {
 
         // Set the message content
         divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate} </b> <br> ${msg.strMessage}`;
+        read_message_to_user(msg.strMessage); //doing this, the text to speech will speak ALL message of chat history, but socket works
         divMessagePane.appendChild(divMessage);
+
     });
 });
-
 
 socket.on('llm_advise', (data) => {
     console.log('check llm_advise: ', data);
@@ -89,7 +90,6 @@ socket.on('llm_advise', (data) => {
     divLLMPane.innerHTML = `<b>${llmAdvise.dtDate}</b>${llmAdvise.strMessage}`;
 });
     
-
 // Function to handle pressing enter key
 function handleEnterKey(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -264,3 +264,26 @@ function updateRecordingStatus(text) {
 /* =====================================================*/
 /* =============== END FOR SENDING AUDIO ===============*/
 /* =====================================================*/
+
+
+
+/* =================================================*/
+/* ================ FOR READING TEXT ===============*/
+/* =================================================*/
+if ('speechSynthesis' in window) {
+    console.log('Text To Speech Active');
+} else {
+    alert("Sorry, your browser doesn't support text to speech!");
+}
+
+function read_message_to_user(strMessage) {
+    console.log('Attempting to speak: ' + strMessage);
+    var objTextToSpeech = new SpeechSynthesisUtterance(); // Create a new object each time
+    objTextToSpeech.text = strMessage; // Set the message to be spoken
+    window.speechSynthesis.speak(objTextToSpeech); // Start speaking
+}
+
+
+/* =================================================*/
+/* ============= END FOR READING TEXT ==============*/
+/* =================================================*/

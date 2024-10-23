@@ -25,3 +25,5 @@ A middleman solution for call centers that facilitates communication between age
 https://discuss.pytorch.org/t/failed-to-import-pytorch-fbgemm-dll-or-one-of-its-dependencies-is-missing/201969/17
 ## If problem with chromadb, follow this installation/selection
 https://www.scivision.dev/python-windows-visual-c-14-required
+## If text to speech not working in browser, add this extension if chrome-based browser
+https://chromewebstore.google.com/detail/speech-recognition-anywhe/kdnnmhpmcakdilnofmllgcigkibjonof?pli=1
