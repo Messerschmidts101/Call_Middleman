@@ -13,6 +13,10 @@ A middleman solution for call centers that facilitates communication between age
 
 
 # Requirements
+## Install FFMPEG for server; this is used to convert audio files for speech recognition compatability
+1. Download full build https://github.com/GyanD/codexffmpeg/releases/tag/2024-10-21-git-baa23e40c1
+2. Extract file
+3. Add .exe to PATH variable
 ## Running VENV using Powershell
 1. python -m venv venv
 2. Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
@@ -21,3 +25,5 @@ A middleman solution for call centers that facilitates communication between age
 https://discuss.pytorch.org/t/failed-to-import-pytorch-fbgemm-dll-or-one-of-its-dependencies-is-missing/201969/17
 ## If problem with chromadb, follow this installation/selection
 https://www.scivision.dev/python-windows-visual-c-14-required
+## If text to speech not working in browser, add this extension if chrome-based browser
+https://chromewebstore.google.com/detail/speech-recognition-anywhe/kdnnmhpmcakdilnofmllgcigkibjonof?pli=1

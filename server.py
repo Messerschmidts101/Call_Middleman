@@ -4,6 +4,10 @@ from dotenv import load_dotenv
 import os
 import utils as U
 
+# socket vs flask
+# socket is for transmit data in real time
+# flask is for transmit big data not real time; updating requires reloading of web page to appear
+
 
 ##########################################
 #######                            #######
@@ -18,6 +22,8 @@ tblChatHistory = U.create_chat_history_table()
 tblContextDatabase = U.create_context_table()
 strPathKnowledgeBaseUser = U.create_knowledge_base_path(0)
 strPathKnowledgeBaseMain = U.create_knowledge_base_path(1)
+objAudioTranscriber = U.create_audio_transcriber()
+
 
 ##########################################
 #######                            #######
@@ -45,6 +51,7 @@ def on_join(data):
                   strMessage = None,
                   strRoom = strRoom, 
                   boolPurpose = 1)
+    
 @socketio.on('leave_room') # shit needs improvement
 def on_leave(data):
     strUser = data['strId']
@@ -54,12 +61,15 @@ def on_leave(data):
                   strMessage = None,
                   strRoom = strRoom, 
                   boolPurpose = 2)
+    
 @socketio.on('send_message')
 def handle_message(data):
     strRoom = data['intRoomNumber']
     strMessage = data['strUserQuestion']
     strUser = data['strId']
     strUserType = data['strUserType']
+    
+    #print(f'[[VERBOSE]] Sending from audio: \n{strRoom}\n{strMessage}\n{strUser}\n{strUserType}')
     if strUserType.lower() == 'customer':
         print(F'[[VERBOSE]]: Original customer message: {strMessage}')
         strMessage = translate_llm(strRoom = strRoom, strMessage = strMessage)
@@ -68,6 +78,38 @@ def handle_message(data):
                   strMessage = strMessage,
                   strRoom = strRoom,
                   boolPurpose = 0)
+
+@app.route('/upload_audio', methods=['POST'])
+def convert_audio_to_text_message():
+    # Step 1: Get data and audio
+    objAudioFile = request.files['audio']
+    strRoom = request.form.get('strRoom')
+    strUser = request.form.get('strId')
+    strUserType = request.form.get('strUserType')
+
+    # Step 2: Get transcription of audio
+    strTranscriptResult = U.create_transcript_to_room(strRoom = strRoom, 
+                                                objAudioFile = objAudioFile,
+                                                objAudioTranscriber = objAudioTranscriber,
+                                                boolVerbose = True)
+    
+    # as much as we want to call handle_message by emit or by direct function call, it wouldnt work because youre calling socketio from app route, thus communication wont trigger, thus instead the solution is to pass the transcript back to client, then from client call handle_message passing the transcript 
+    return jsonify({'status': 'success trancription', 'message': strTranscriptResult}), 200
+    '''
+    # Step 3: Pass transcription as text
+    dicPayload = {
+        'intRoomNumber':strRoom,
+        'strUserQuestion':strTranscriptResult,
+        'strId':strUser,
+        'strUserType':strUserType,
+    }
+
+    # Call handle_message() using socketio.emit at send_message route because it will not work if handle_message() is just called.
+    #socketio.emit('send_message', dicPayload)
+
+    handle_message(dicPayload)
+    # Return a success response aparently required
+    return jsonify({'status': 'success trancription', 'message': 'Audio uploaded and message sent successfully'}), 200'''
     
 @socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
 def ask_llm(data):
@@ -86,7 +128,6 @@ def ask_llm(data):
     else:
         print('[[VERBOSE]] Not a customer user type to generate an llm advise.')
     
-
 @app.route('/file_upload', methods=['POST']) # cannot be converted to socket protocol
 def handle_file_upload():
     global tblContextDatabase
@@ -106,7 +147,6 @@ def handle_file_upload():
                                 strRoom = room_number)
 
     return jsonify({'status': 'success'})
-
 
 def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
     '''
@@ -183,4 +223,4 @@ def translate_llm(strRoom,strMessage):
     return strResponse
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True)  # Added debug=True for development purposes
+    socketio.run(app, debug=True, host='192.168.1.8')  # Added debug=True for development purposes, host is required so that mobile device can access it; host is ipv4 address of server

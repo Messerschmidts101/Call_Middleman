@@ -1,5 +1,6 @@
-document.getElementById('UserType').addEventListener('change', function() {
-    const selectedUserType = this.value;
+
+document.body.addEventListener('click', function() {
+    const selectedUserType = document.getElementById('UserType').value;
     const llmPanel = document.querySelector('.llm-panel'); // Select the llm-panel
 
     if (selectedUserType === "Customer") {
@@ -9,8 +10,7 @@ document.getElementById('UserType').addEventListener('change', function() {
       // Show the llm-panel when "Agent" is selected
       llmPanel.style.display = 'flex';
     }
-  });
-
+});
 
 const socket = io(); 
 
@@ -72,10 +72,18 @@ socket.on('chat_history', (data) => {
 
         // Set the message content
         divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate} </b> <br> ${msg.strMessage}`;
+        //read_message_to_user(msg.strMessage); //doing this, the text to speech will speak ALL message of chat history, but socket works
         divMessagePane.appendChild(divMessage);
     });
-});
 
+    // Only read the last message after the loop
+    if (chatHistory.length > 0) {
+        const lisLastMessage = chatHistory[chatHistory.length - 1];
+        if (lisLastMessage.strUser != strId){
+            read_message_to_user(lisLastMessage.strMessage); // Read only the last message
+        }
+    }
+});
 
 socket.on('llm_advise', (data) => {
     console.log('check llm_advise: ', data);
@@ -89,7 +97,6 @@ socket.on('llm_advise', (data) => {
     divLLMPane.innerHTML = `<b>${llmAdvise.dtDate}</b>${llmAdvise.strMessage}`;
 });
     
-
 // Function to handle pressing enter key
 function handleEnterKey(event) {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -168,3 +175,122 @@ function uploadFile() {
     });
 }
 
+/* =================================================*/
+/* =============== FOR SENDING AUDIO ===============*/
+/* =================================================*/
+
+let mediaRecorder;
+let audioChunks = [];
+let isRecording = false; // State variable to track recording status
+
+// Function to toggle between start and stop recording
+function toggleRecording() {
+    if (!isRecording) {
+        startRecording(); // Start recording if not already recording
+    } else {
+        stopRecording(); // Stop recording if it's already in progress
+    }
+}
+
+// Function to start recording
+function startRecording() {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.start();
+            isRecording = true; // Set the state to recording
+            updateRecordingStatus("Recording..."); // Update button text to show status
+            console.log("Recording started");
+        })
+        .catch(error => {
+            console.error('Error accessing microphone: ', error);
+        });
+}
+
+// Function to stop recording and send audio to the server
+function stopRecording() {
+    if (!isRecording) return; // Prevent stopping if not currently recording
+
+    mediaRecorder.stop();
+    mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        console.log('Audio Blob size:', audioBlob.size);  // Check Blob size
+        audioChunks = []; // Clear the chunks after stopping
+        
+        // Send the audioBlob to the server
+        sendAudioMessage(audioBlob);
+        updateRecordingStatus("Start Recording"); // Reset button text after stopping
+        console.log("Recording stopped and sent");
+        isRecording = false; // Reset the state after stopping
+    };
+}
+
+// Function to send the audio file to the server
+function sendAudioMessage(audioBlob) {
+    console.log('Sending audioBlob size:', audioBlob.size);  // Check size before sending
+    const intRoomNumber = document.getElementById('roomNumber').value;
+    const strId = document.getElementById('customerName').value; 
+    const strUserType = document.getElementById('UserType').value;
+    const formData = new FormData();
+    formData.append('audio', audioBlob);
+    formData.append('strRoom', intRoomNumber);
+    formData.append('strUserType', strUserType);
+    formData.append('strId', strId);
+
+    fetch('/upload_audio', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log('Success:', data);
+        // Call handle_message with the transcript result
+        console.log('success transcript');
+        const dicPayload = {
+            intRoomNumber: intRoomNumber,
+            strUserQuestion: data.message, // This is the transcript
+            strId: strId,
+            strUserType: strUserType,
+        };
+        // Emit the message to the server
+        socket.emit('send_message', dicPayload);
+    })
+    .catch(error => {
+        console.error('Error:', error);
+    });
+}
+
+// Function to update recording button status
+function updateRecordingStatus(text) {
+    const statusSpan = document.getElementById('recordingStatus');
+    statusSpan.textContent = text;
+}
+/* =====================================================*/
+/* =============== END FOR SENDING AUDIO ===============*/
+/* =====================================================*/
+
+
+
+/* =================================================*/
+/* ================ FOR READING TEXT ===============*/
+/* =================================================*/
+if ('speechSynthesis' in window) {
+    console.log('Text To Speech Active');
+} else {
+    alert("Sorry, your browser doesn't support text to speech!");
+}
+
+function read_message_to_user(strMessage) {
+    console.log('Attempting to speak: ' + strMessage);
+    var objTextToSpeech = new SpeechSynthesisUtterance(); // Create a new object each time
+    objTextToSpeech.text = strMessage; // Set the message to be spoken
+    window.speechSynthesis.speak(objTextToSpeech); // Start speaking
+}
+
+
+/* =================================================*/
+/* ============= END FOR READING TEXT ==============*/
+/* =================================================*/

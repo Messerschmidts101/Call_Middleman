@@ -2,7 +2,11 @@ from datetime import datetime
 import Large_Language_Model.LLM_Component as LLM_Component
 import Large_Language_Model.Personas as Personas
 import pandas as pd
-import os,shutil
+import speech_recognition as sr
+import os,shutil,subprocess
+
+def create_audio_transcriber():
+    return sr.Recognizer()
 
 def create_knowledge_base_path(boolMode = 0):
     if boolMode == 0:
@@ -237,3 +241,45 @@ def create_embeddings_to_room(tblContextDatabase,
         # Do something if no rows matched the filter
         print(f"No data found for room: {strRoom}")
         return False
+    
+def create_transcript_to_room(strRoom,objAudioFile,objAudioTranscriber,boolVerbose = False):
+    # Step 1: Save the audio file to disk
+    strAudioFilePath = os.path.join(os.getcwd(), 'Website', 'Database', 'User_Knowledge_Base', strRoom, 'audio.wav')
+    strConvertedAudioFilePath = os.path.join(os.getcwd(), 'Website', 'Database', 'User_Knowledge_Base', strRoom, 'converted_audio.wav')
+    try:
+        with open(strAudioFilePath, 'wb') as f:
+            f.write(objAudioFile.read())
+        if boolVerbose:
+            if os.path.exists(strAudioFilePath):
+                print(f"[[VERBOSE]] Raw audio file saved at: {strAudioFilePath}, Size: {os.path.getsize(strAudioFilePath)} bytes")
+            else:
+                print(f"[[VERBOSE]] Raw audio file not found after saving at: {strAudioFilePath}")
+        # Convert the audio to PCM WAV using ffmpeg; necessary for transcriber 
+        subprocess.run(['ffmpeg','-y', '-i', strAudioFilePath, '-ar', '16000', '-ac', '1', strConvertedAudioFilePath], check=True)
+    except Exception as e:
+        return f"[[VERBOSE]] Error failed to store audio due to reason: {e}"
+
+    # Step 2: Create transcription
+    try:
+        with sr.AudioFile(strConvertedAudioFilePath) as objSource:
+            objAudio = objAudioTranscriber.record(objSource)  # Read the entire audio file
+        strTranscriptResult = objAudioTranscriber.recognize_google(objAudio)
+        if boolVerbose:
+            print('[[VERBOSE]] Check transcript here: ', strTranscriptResult)
+    except Exception as e:
+        return f"[[VERBOSE]] Error failed to transcribe audio due to reason: {e}"
+
+    # Step 3: Delete the audio file
+    try:
+        if os.path.exists(strAudioFilePath):
+            os.remove(strAudioFilePath)
+            if boolVerbose:
+                print(f"[[VERBOSE]] Deleted raw audio file: {strAudioFilePath}")
+        if os.path.exists(strConvertedAudioFilePath):
+            os.remove(strConvertedAudioFilePath)
+            if boolVerbose:
+                print(f"[[VERBOSE]] Deleted converted audio file: {strConvertedAudioFilePath}")
+    except Exception as e:
+        return f"[[VERBOSE]] Error: Failed to delete audio files due to reason: {e}"
+    
+    return strTranscriptResult
