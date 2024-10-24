@@ -34,12 +34,17 @@ class LLM:
         self.strIngestPath = strIngestPath
         self.objEmbeddingModel = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
         self.lisChatHistory = []
-        self.intLLMAccessory = intLLMAccessory
         self.initialize_llm(intLLMSetting,
                             fltTemperature,
                             intRetrieverK,
                             intLLMAccessory,
                             strPromptTemplate)
+        
+        #===== These starting arguments needed to be class attributes because RAG chain are required to be regenerated when adding new data=====
+        self.intLLMAccessory = intLLMAccessory
+        self.intRetrieverK = intRetrieverK
+        self.intLLMSetting = intLLMSetting
+        self.strPromptTemplate = strPromptTemplate
 
     def initialize_llm(self, intLLMSetting, 
                        fltTemperature, 
@@ -152,35 +157,35 @@ class LLM:
         print('type of docs: ',type(docs))
         return "\n\n".join(doc.page_content for doc in docs)
 
-    def add_to_chat_history(self, strUserInput, strLLMOutput):
+    def add_chat_history(self, strUserInput, strLLMOutput):
         '''
-        This method adds a single dictionary with both User input and System (LLM) output to the chat history.
+        This method does actually adds chat to the history for this LLM, however the chain is regenerated because the history retriever needs to be updated back to the chain.
         '''
         # Update chat history with both User input and System output in the same dictionary
         self.lisChatHistory.append({"Message Index":len(self.lisChatHistory)+1,
                                     "Timestamp": datetime.now(), 
                                     "User": strUserInput, 
                                     "System": strLLMOutput})
-        # Update vector database of chat history
-        objEmbeddingChatHistory = self.ingest_chat_history()
-        self.objRetrieverChatHistory = objEmbeddingChatHistory.as_retriever(search_kwargs={"k": 5})
         
-    def ingest_context(self,boolReingest = None):
+        # Update vector database of chat history
+        # WRONGGGGG code below will not work as the retriever wont be updated to the RAG chain; solution is recreate the chain
+        # objEmbeddingChatHistory = self.ingest_chat_history()
+        # self.objRetrieverChatHistory = objEmbeddingChatHistory.as_retriever(search_kwargs={"k": 5})
+        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.intLLMSetting,self.strPromptTemplate)
+    
+    def add_context(self):
         '''
-        This method converts all files in a directory and outputs a Chroma database on the same location.
-        This can happen manually or automatically. 
-        You can use this method manually when there is a need to update the knowledge base after this class was insantiated.
-        You use this method automatically when insantiating this class and 'boolCreateDatabase is' set to True.
+        This method does actually adds context for this LLM, however the chain is regenerated because the context retriever needs to be updated back to the chain.
         '''
+        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.intLLMSetting,self.strPromptTemplate)
+
+    def ingest_context(self):
         strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
-        if self.boolCreateDatabase or boolReingest:
-            objLoader = DirectoryLoader(self.strIngestPath, glob="**/*.txt", loader_cls=TextLoader, show_progress=False)
-            raw_documents = objLoader.load()
-            text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
-            documents = text_splitter.split_documents(raw_documents)
-            return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
-        else:
-            return Chroma(embedding_function = self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
+        objLoader = DirectoryLoader(self.strIngestPath, glob="**/*.txt", loader_cls=TextLoader, show_progress=False)
+        raw_documents = objLoader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        documents = text_splitter.split_documents(raw_documents)
+        return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
         
     def ingest_chat_history(self):
         '''
@@ -221,7 +226,7 @@ class LLM:
             objResponseRetriever = None
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
         if self.intLLMAccessory in [2,3]:
-            self.add_to_chat_history(strQuestion,strResponse)
+            self.add_chat_history(strQuestion,strResponse)
             strResult = self.objRetrieverChatHistory.get_relevant_documents(query = strQuestion)
             if boolVerbose:
                 print('\n-----','Verbose || Chat History: ',strResult ,'\n-----')

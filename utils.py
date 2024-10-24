@@ -230,12 +230,7 @@ def create_embeddings_to_room(tblContextDatabase,
         # Get the LLM object
         tempobjLLM = tblResult['objLLM'].iloc[0]
         # Instruct to ingest data
-        # Why create_chain() instead of ingest_context()? This is because the chain needs the output of new chroma as retriever, thus whenever create_chain() is called, the directory is reingested and added to the chain
-        strPromptTemplate = Personas.strTemplateSuggestResponse
-        tempobjLLM.create_chain(intLLMAccessory = 3,
-                                intRetrieverK = 5,
-                                intLLMSetting = 1,
-                                strPromptTemplate = strPromptTemplate)
+        tempobjLLM.add_context()
         return True
     else:
         # Do something if no rows matched the filter

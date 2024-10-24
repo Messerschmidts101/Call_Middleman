@@ -39,6 +39,7 @@ def on_join(data):
     strUser = data['strId']
     strRoom = data['intRoomNumber']
     join_room(strRoom)
+    #checks if llm exists, if not, create llm for that room
     if U.get_llm(tblContextDatabase = tblContextDatabase,
                  strRoom = strRoom):
         pass # nothing happens really as there is an llm already created
@@ -95,21 +96,6 @@ def convert_audio_to_text_message():
     
     # as much as we want to call handle_message by emit or by direct function call, it wouldnt work because youre calling socketio from app route, thus communication wont trigger, thus instead the solution is to pass the transcript back to client, then from client call handle_message passing the transcript 
     return jsonify({'status': 'success trancription', 'message': strTranscriptResult}), 200
-    '''
-    # Step 3: Pass transcription as text
-    dicPayload = {
-        'intRoomNumber':strRoom,
-        'strUserQuestion':strTranscriptResult,
-        'strId':strUser,
-        'strUserType':strUserType,
-    }
-
-    # Call handle_message() using socketio.emit at send_message route because it will not work if handle_message() is just called.
-    #socketio.emit('send_message', dicPayload)
-
-    handle_message(dicPayload)
-    # Return a success response aparently required
-    return jsonify({'status': 'success trancription', 'message': 'Audio uploaded and message sent successfully'}), 200'''
     
 @socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
 def ask_llm(data):
