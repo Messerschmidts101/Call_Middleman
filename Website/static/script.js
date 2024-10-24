@@ -72,10 +72,17 @@ socket.on('chat_history', (data) => {
 
         // Set the message content
         divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate} </b> <br> ${msg.strMessage}`;
-        read_message_to_user(msg.strMessage); //doing this, the text to speech will speak ALL message of chat history, but socket works
+        //read_message_to_user(msg.strMessage); //doing this, the text to speech will speak ALL message of chat history, but socket works
         divMessagePane.appendChild(divMessage);
-
     });
+
+    // Only read the last message after the loop
+    if (chatHistory.length > 0) {
+        const lisLastMessage = chatHistory[chatHistory.length - 1];
+        if (lisLastMessage.strUser != strId){
+            read_message_to_user(lisLastMessage.strMessage); // Read only the last message
+        }
+    }
 });
 
 socket.on('llm_advise', (data) => {
