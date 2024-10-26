@@ -8,7 +8,6 @@ import utils as U
 # socket is for transmit data in real time
 # flask is for transmit big data not real time; updating requires reloading of web page to appear
 
-
 ##########################################
 #######                            #######
 #######          Constants         #######
@@ -33,13 +32,14 @@ objAudioTranscriber = U.create_audio_transcriber()
 @app.route('/')
 def index():
     return render_template('chat.html')  
+
 @socketio.on('join_room')
 def on_join(data):
     global tblContextDatabase
     strUser = data['strId']
     strRoom = data['intRoomNumber']
     join_room(strRoom)
-    #checks if llm exists, if not, create llm for that room
+    #just checks if llm exists, if not, create llm for that room
     if U.get_llm(tblContextDatabase = tblContextDatabase,
                  strRoom = strRoom):
         pass # nothing happens really as there is an llm already created
@@ -51,17 +51,7 @@ def on_join(data):
     emit_protocol(strUser = strUser,
                   strMessage = None,
                   strRoom = strRoom, 
-                  boolPurpose = 1)
-    
-@socketio.on('leave_room') # shit needs improvement
-def on_leave(data):
-    strUser = data['strId']
-    strRoom = data['intRoomNumber']
-    leave_room(strRoom)
-    emit_protocol(strUser = strUser,
-                  strMessage = None,
-                  strRoom = strRoom, 
-                  boolPurpose = 2)
+                  intPurpose = 1)
     
 @socketio.on('send_message')
 def handle_message(data):
@@ -78,7 +68,7 @@ def handle_message(data):
     emit_protocol(strUser = strUser,
                   strMessage = strMessage,
                   strRoom = strRoom,
-                  boolPurpose = 0)
+                  intPurpose = 0)
 
 @app.route('/upload_audio', methods=['POST'])
 def convert_audio_to_text_message():
@@ -110,7 +100,7 @@ def ask_llm(data):
         emit_protocol(strUser = None,
                     strMessage = strResponse,
                     strRoom = strRoom, 
-                    boolPurpose = 3)
+                    intPurpose = 3)
     else:
         print('[[VERBOSE]] Not a customer user type to generate an llm advise.')
     
@@ -134,23 +124,23 @@ def handle_file_upload():
 
     return jsonify({'status': 'success'})
 
-def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
+def emit_protocol(strUser,strMessage,strRoom,intPurpose = 0):
     '''
     [[Inputs]]
         1. strUser = the author of the message.
         2. strMessage = the message to be sent.
         3. strRoom = the destination of the message.
         4. strUserType = the type of user of the author of the message.
-        5. boolPurpose = the purpose of emit: [0] message of the user; [1] notif of joined the room; [2] notif of left the room; [3] the message will be from LLM advise
+        5. intPurpose = the purpose of emit: [0] message of the user; [1] notif of joined the room; [2] notif of left the room; [3] the message will be from LLM advise
     [[Process/Outputs]]
         This improves basic emit() function by standardizing the emit() processes while still remaining the purpose of sending message to a room.
     '''
     global tblChatHistory  # Declare it as global to modify the global variable
 
-    if boolPurpose == 0:
+    if intPurpose == 0:
         dicPayload = U.create_payload_to_room(strUsername = strUser,
                                                 strRoom = strRoom,
-                                                boolPurpose = 0,
+                                                intPurpose = 0,
                                                 strMessage = strMessage)
         tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
                                                                 dicPayload = dicPayload)
@@ -160,10 +150,10 @@ def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
         emit('chat_history', 
             {'chat_history': dicPayloadChatHistory},
             room = strRoom)
-    elif boolPurpose == 1:
+    elif intPurpose == 1:
         dicPayload = U.create_payload_to_room(strUsername = strUser,
                                           strRoom = strRoom,
-                                          boolPurpose = 1,
+                                          intPurpose = 1,
                                           strMessage = None)
         tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
                                                             dicPayload = dicPayload)
@@ -173,10 +163,10 @@ def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
         emit('chat_history', 
             {'chat_history': dicPayloadChatHistory},
             room = strRoom)
-    elif boolPurpose == 2:
+    elif intPurpose == 2:
         dicPayload = U.create_payload_to_room(strUsername = strUser,
                                           strRoom = strRoom,
-                                          boolPurpose = 2,
+                                          intPurpose = 2,
                                           strMessage = None)
         tblChatHistory = U.add_message_to_chat_history_table(tblChatHistory = tblChatHistory,
                                                             dicPayload = dicPayload)
@@ -186,10 +176,10 @@ def emit_protocol(strUser,strMessage,strRoom,boolPurpose = 0):
         emit('chat_history', 
             {'chat_history': dicPayloadChatHistory},
             room = strRoom)
-    elif boolPurpose == 3:
+    elif intPurpose == 3:
         dicPayload = U.create_payload_to_room(strUsername = 'LLM Advisor',
                                                 strRoom = strRoom,
-                                                boolPurpose = 0,
+                                                intPurpose = 0,
                                                 strMessage = strMessage)
        
         emit('llm_advise', 
@@ -209,4 +199,4 @@ def translate_llm(strRoom,strMessage):
     return strResponse
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, host='192.168.1.8', ssl_context=('cert.pem', 'key.pem'))  # Added debug=True for development purposes, host is required so that mobile device can access it; host is ipv4 address of server
+    socketio.run(app, debug=True, host='192.168.1.8', ssl_context=('cert.pem', 'key.pem'))  # Added debug=True for development purposes, host is required so that mobile device can access it; host is ipv4 address of device

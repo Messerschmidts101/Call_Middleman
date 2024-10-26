@@ -283,6 +283,7 @@ textarea#userMessage:focus {
   justify-content: center;
   cursor: pointer;
   transition: background-color 0.3s ease;
+  color: white; /* Set text color to white */
 }
 
 .send-btn:hover {
