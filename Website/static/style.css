@@ -133,6 +133,7 @@ input#roomNumber {
   padding: 15px;              /* Internal padding for content spacing */
   box-sizing: border-box;      /* Include padding in width calculations */
   width: 100%;
+  overflow: auto;
 }
 
 .advised-response-panel-message {/*not this cause expansion; even with max width of 20%, still increasing*/
@@ -156,8 +157,8 @@ input#roomNumber {
   flex-grow: 2;
   display: flex;
   flex-direction: row;
+  min-height: fit-content;
   gap: 5px; /* Reduce the gap between the elements */
-  margin-bottom: 1.5%; /* Reduced bottom margin for less space */
   width: 100%; /* Make the file input pane take the full width */
   max-width: 100%; /* Ensure it doesn't exceed the panel width */
   overflow: hidden; /* Prevent overflow from this pane */
