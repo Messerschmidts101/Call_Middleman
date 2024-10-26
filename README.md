@@ -8,7 +8,7 @@ A middleman solution for call centers that facilitates communication between age
 
 ## How
 1. **Message Processing**: The LLM filters, summarizes, and enhances customer messages, transforming them into easily digestible and friendly-toned messages for agents.
-2. **Response Suggestions**: The LLM suggests appropriate responses based on the customer's message, emotional state, and relevant customer details.
+2. **Response Suggestions**: The LLM suggests appropriate responses based on the customer's message, emotional state, and relevant customer details, so that calls are resolved efficiently.
 3. **Contextual Support**: Maintains the context of ongoing conversations, ensuring that agents are equipped with relevant information and previous interaction history to handle customer queries smoothly.
 
 
