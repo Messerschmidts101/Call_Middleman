@@ -48,12 +48,12 @@ def add_message_to_chat_history_table(tblChatHistory,dicPayload):
 
 def create_payload_to_room(strUsername,
                            strRoom = None,
-                           boolPurpose = 0,
+                           intPurpose = 0,
                            strMessage = None):
     """
     [[Inputs]]
         1. strUsername = the name of the user
-        2. boolPurpose = purpose of the creation, this can be either of the following: [0] message of the user; [1] notif of joined the room; [2] notif of left the room
+        2. intPurpose = purpose of the creation, this can be either of the following: [0] message of the user; [1] notif of joined the room; [2] notif of left the room
     [[Process/Outputs]]
         This formats payload to be sent to rooms. This outputs a dictionary with the format:
         ```
@@ -65,10 +65,10 @@ def create_payload_to_room(strUsername,
         }
         ```
     """
-    if boolPurpose == 1:
+    if intPurpose == 1:
         strMessage = f'{strUsername} has joined the room.' 
         strUsername = 'System'
-    elif boolPurpose == 2:
+    elif intPurpose == 2:
         strMessage = f'{strUsername} has left the room.' 
         strUsername = 'System'
     # datetime object containing current date and time
@@ -175,8 +175,6 @@ def get_llm_advice(tblContextDatabase,
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
                                                           strOutputPath = None, 
                                                           boolShowSource = True)
-        #print("[[VERBOSE]] check llm response here: ", strResponse)
-        #print("[[VERBOSE]] check llm reference here: ", strContext)
         return strResponse,strContext
     else:
         # Do something if no rows matched the filter

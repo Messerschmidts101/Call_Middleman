@@ -47,14 +47,13 @@ function sendMessage() {
 }
 
 socket.on('chat_history', (data) => {
-    console.log('check chat_history: ',data)
+    console.log('check chat_history: ', data);
     const chatHistory = data.chat_history;
     const strId = document.getElementById('customerName').value; // Adjusted to use the correct input ID
-
     const divMessagePane = document.getElementById('messages');
-    
-    divMessagePane.innerHTML = '';  // Clear existing messages
-    
+
+    divMessagePane.innerHTML = ''; // Clear existing messages
+
     // Loop through the chat history and add each message
     chatHistory.forEach((msg) => {
         const divMessage = document.createElement('div');
@@ -64,26 +63,29 @@ socket.on('chat_history', (data) => {
         // Assign id based on whether the message user matches the customer name
         if (strId === msg.strUser) {
             divMessage.id = 'owner';
-        } else if ('System' == msg.strUser){
+        } else if ('System' === msg.strUser) {
             divMessage.id = 'system';
         } else {
             divMessage.id = 'other';
         }
 
         // Set the message content
-        divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate} </b> <br> ${msg.strMessage}`;
-        //read_message_to_user(msg.strMessage); //doing this, the text to speech will speak ALL message of chat history, but socket works
+        divMessage.innerHTML = `<b>${msg.strUser}: ${msg.dtDate}</b><br>${msg.strMessage}`;
         divMessagePane.appendChild(divMessage);
     });
 
-    // Only read the last message after the loop
+    // Only read the last message after the loop and scroll to the bottom
     if (chatHistory.length > 0) {
-        const lisLastMessage = chatHistory[chatHistory.length - 1];
-        if (lisLastMessage.strUser != strId){
-            read_message_to_user(lisLastMessage.strMessage); // Read only the last message
+        const lastMessage = chatHistory[chatHistory.length - 1];
+        if (lastMessage.strUser !== strId) {
+            read_message_to_user(lastMessage.strMessage); // Read only the last message
         }
+
+        // Scroll to the bottom of the message pane
+        divMessagePane.scrollTop = divMessagePane.scrollHeight;
     }
 });
+
 
 socket.on('llm_advise', (data) => {
     console.log('check llm_advise: ', data);

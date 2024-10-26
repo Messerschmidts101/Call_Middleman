@@ -52,7 +52,9 @@ class LLM:
                        intLLMAccessory,
                        strPromptTemplate):
         '''
-        This method creates LLM with their RAG Chain for this class
+        This method creates LLM with their RAG Chain for this class. 
+        This LLM allows chat history and context.
+        Both chat history and context has retrievers, thus the chain will be recreated per question if the vector database will be updated.
         '''
         dictLLMSettings = {
             1: "mixtral-8x7b-32768",
@@ -85,7 +87,7 @@ class LLM:
         elif intLLMSetting == 3:  # HuggingFace LLM
             self.objLLM = HuggingFaceEndpoint(repo_id = strModelName, 
                                               temperature = fltTemperature, 
-                                              token =self.strAPIKey)
+                                              token = self.strAPIKey)
         elif intLLMSetting == 4: # OpenAI LLM
             self.objLLM = AzureChatOpenAI(
                 api_key = self.strAPIKey,

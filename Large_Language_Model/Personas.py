@@ -73,5 +73,5 @@ Question:
 {question}
 </question>
 ------
-Provide a brief answer:
+Provide a brief answer based on the information above:
 """
