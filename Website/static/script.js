@@ -257,6 +257,7 @@ function sendAudioMessage(audioBlob) {
         };
         // Emit the message to the server
         socket.emit('send_message', dicPayload);
+        socket.emit('ask_llm',dicPayload);
     })
     .catch(error => {
         console.error('Error:', error);
