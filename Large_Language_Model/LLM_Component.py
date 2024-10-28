@@ -74,7 +74,6 @@ class LLM:
             raise ValueError("Invalid LLM accessory and prompt template combination")
         self.create_chain(intLLMAccessory = intLLMAccessory,
                           intRetrieverK = intRetrieverK,
-                          intLLMSetting = intLLMSetting,
                           strPromptTemplate = strPromptTemplate)
         
     def create_llm(self,intLLMSetting,fltTemperature,strModelName):
@@ -97,8 +96,8 @@ class LLM:
                 api_version = "2024-02-01"
             )
 
-    def create_chain(self,intLLMAccessory,intRetrieverK,
-                     intLLMSetting,strPromptTemplate):
+    def create_chain(self,intLLMAccessory,intRetrieverK,strPromptTemplate):
+        # intLLMSetting is obsolete
         if intLLMAccessory > 0:
             if intLLMAccessory == 1:
                 #just context on RAG
@@ -110,7 +109,7 @@ class LLM:
                                   self.objPromptTemplate | 
                                   self.objLLM)
             elif intLLMAccessory == 2:
-                raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMSetting}")
+                raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMAccessory}")
             elif intLLMAccessory == 3:
                 # Both context and chat history in RAG
                 self.objPromptTemplate = PromptTemplate(
@@ -126,7 +125,7 @@ class LLM:
                                   self.objPromptTemplate | 
                                   self.objLLM)
             else:
-                raise ValueError(f"Invalid LLM Additions: {intLLMSetting}")
+                raise ValueError(f"Invalid LLM Additions: {intLLMAccessory}")
         else:
             self.objPromptTemplate = PromptTemplate(template = strPromptTemplate, 
                                                     input_variables=["question"])
@@ -156,7 +155,6 @@ class LLM:
         '''
         This method is a sub process for ingesting database for context only RAG chains, triggered by ingest_context()
         '''
-        print('type of docs: ',type(docs))
         return "\n\n".join(doc.page_content for doc in docs)
 
     def add_chat_history(self, strUserInput, strLLMOutput):
@@ -173,13 +171,13 @@ class LLM:
         # WRONGGGGG code below will not work as the retriever wont be updated to the RAG chain; solution is recreate the chain
         # objEmbeddingChatHistory = self.ingest_chat_history()
         # self.objRetrieverChatHistory = objEmbeddingChatHistory.as_retriever(search_kwargs={"k": 5})
-        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.intLLMSetting,self.strPromptTemplate)
+        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.strPromptTemplate)
     
     def add_context(self):
         '''
         This method does actually adds context for this LLM, however the chain is regenerated because the context retriever needs to be updated back to the chain.
         '''
-        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.intLLMSetting,self.strPromptTemplate)
+        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.strPromptTemplate)
 
     def ingest_context(self):
         strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
@@ -223,9 +221,9 @@ class LLM:
             print('Warning: intDelay is less than 90, setting intDelay to 90 or higher.')
             intDelay = 90
         if boolShowSource:
-            objResponseRetriever = self.objRetrieverContext.get_relevant_documents(strQuestion)
+            strContexts = self.objRetrieverContext.get_relevant_documents(strQuestion)
         else:
-            objResponseRetriever = None
+            strContexts = None
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
         if self.intLLMAccessory in [2,3]:
             self.add_chat_history(strQuestion,strResponse)
@@ -234,7 +232,7 @@ class LLM:
                 print('\n-----','Verbose || Chat History: ',strResult ,'\n-----')
         if strOutputPath:
             self.save_response_as_file(strResponse, strOutputPath)
-        return strResponse,objResponseRetriever
+        return strResponse,strContexts
 
     def retry_chain_invoke(self, strQuestion, intRetries, intDelay, boolVerbose):
         for intAttempt in range(intRetries):
