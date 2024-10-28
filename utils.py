@@ -169,7 +169,6 @@ def get_llm_advice(tblContextDatabase,
         strPromptTemplate = Personas.strTemplateContextResponse
         tempobjLLM.create_chain(intLLMAccessory = 3,
                                 intRetrieverK = 5,
-                                intLLMSetting = 1,
                                 strPromptTemplate = strPromptTemplate)
         # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
@@ -200,7 +199,6 @@ def get_llm_translation(tblContextDatabase,
         strPromptTemplate = Personas.strTemplateTranslateToCalm
         tempobjLLM.create_chain(intLLMAccessory = 0,
                                 intRetrieverK = None,
-                                intLLMSetting = 1,
                                 strPromptTemplate = strPromptTemplate)
         # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 

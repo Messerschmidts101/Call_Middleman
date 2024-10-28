@@ -74,7 +74,6 @@ class LLM:
             raise ValueError("Invalid LLM accessory and prompt template combination")
         self.create_chain(intLLMAccessory = intLLMAccessory,
                           intRetrieverK = intRetrieverK,
-                          intLLMSetting = intLLMSetting,
                           strPromptTemplate = strPromptTemplate)
         
     def create_llm(self,intLLMSetting,fltTemperature,strModelName):
@@ -97,8 +96,8 @@ class LLM:
                 api_version = "2024-02-01"
             )
 
-    def create_chain(self,intLLMAccessory,intRetrieverK,
-                     intLLMSetting,strPromptTemplate):
+    def create_chain(self,intLLMAccessory,intRetrieverK,strPromptTemplate):
+        # intLLMSetting is obsolete
         if intLLMAccessory > 0:
             if intLLMAccessory == 1:
                 #just context on RAG
@@ -110,7 +109,7 @@ class LLM:
                                   self.objPromptTemplate | 
                                   self.objLLM)
             elif intLLMAccessory == 2:
-                raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMSetting}")
+                raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMAccessory}")
             elif intLLMAccessory == 3:
                 # Both context and chat history in RAG
                 self.objPromptTemplate = PromptTemplate(
@@ -126,7 +125,7 @@ class LLM:
                                   self.objPromptTemplate | 
                                   self.objLLM)
             else:
-                raise ValueError(f"Invalid LLM Additions: {intLLMSetting}")
+                raise ValueError(f"Invalid LLM Additions: {intLLMAccessory}")
         else:
             self.objPromptTemplate = PromptTemplate(template = strPromptTemplate, 
                                                     input_variables=["question"])
@@ -173,13 +172,13 @@ class LLM:
         # WRONGGGGG code below will not work as the retriever wont be updated to the RAG chain; solution is recreate the chain
         # objEmbeddingChatHistory = self.ingest_chat_history()
         # self.objRetrieverChatHistory = objEmbeddingChatHistory.as_retriever(search_kwargs={"k": 5})
-        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.intLLMSetting,self.strPromptTemplate)
+        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.strPromptTemplate)
     
     def add_context(self):
         '''
         This method does actually adds context for this LLM, however the chain is regenerated because the context retriever needs to be updated back to the chain.
         '''
-        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.intLLMSetting,self.strPromptTemplate)
+        self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.strPromptTemplate)
 
     def ingest_context(self):
         strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
