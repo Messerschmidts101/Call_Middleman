@@ -95,10 +95,16 @@ def get_chat_history(tblChatHistory, strRoom):
     tblChatHistoryFilteredSorted['dtDate'] = tblChatHistoryFilteredSorted['dtDate'].dt.strftime("%d/%m/%Y %H:%M:%S") # essential to convert to string as payload wont doesnt recognize this data type
     return tblChatHistoryFilteredSorted
 
+
+
+
 def create_llm_to_room(tblContextDatabase,
                        strRoom,
                        strPathKnowledgeBaseUser,
-                       strPathKnowledgeBaseMain):
+                       strPathKnowledgeBaseMain,
+                       intLLMSetting = 1,
+                       intLLMAccessory = 3,
+                       strPromptTemplate = Personas.strTemplateSuggestResponse):
     """
     [[Inputs]]
         1. tblContextDatabase = the pandas table you want to modify; if None, returns an llm object instead.
@@ -119,12 +125,12 @@ def create_llm_to_room(tblContextDatabase,
 
     # Create LLM
     Path_Target_Directory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
-    objLLM = LLM_Component.LLM(intLLMSetting = 1,
+    objLLM = LLM_Component.LLM(intLLMSetting = intLLMSetting,
                         strIngestPath = Path_Target_Directory,
-                        strPromptTemplate = Personas.strTemplateSuggestResponse,
+                        strPromptTemplate = strPromptTemplate,
                         strAPIKey = os.getenv('GROQ_KEY'),
                         boolCreateDatabase = True,
-                        intLLMAccessory = 3)
+                        intLLMAccessory = intLLMAccessory)
     
     if tblContextDatabase: 
         # Update Table

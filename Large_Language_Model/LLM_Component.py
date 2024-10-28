@@ -17,6 +17,7 @@ from langchain_openai import AzureChatOpenAI
 
 import os
 import uuid
+from operator import itemgetter
 from datetime import datetime
 import time
 
@@ -124,6 +125,23 @@ class LLM:
                                   "question": RunnablePassthrough()} | 
                                   self.objPromptTemplate | 
                                   self.objLLM)
+            elif intLLMAccessory == 4:
+                # QA mode
+                self.objPromptTemplate = PromptTemplate(
+                    template = strPromptTemplate, 
+                    input_variables=["chat_history","customer_question","llm_response","context"]
+                )
+
+                self.objRetrieverContext = self.ingest_context_qa().as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objRetrieverChatHistory = self.ingest_chat_history().as_retriever(search_kwargs={"k": intRetrieverK})
+                # Use the updated combine_docs_chat_history function to provide chat history
+                self.objChain = ({"chat_history":  itemgetter('customer_question') |self.objRetrieverChatHistory | self.combine_docs,  
+                                  "context": itemgetter('customer_question') | self.objRetrieverContext | self.combine_docs,
+                                  "customer_question": itemgetter('customer_question') | RunnablePassthrough(),
+                                  "llm_response": itemgetter('llm_response') | RunnablePassthrough()} | 
+                                  self.objPromptTemplate | 
+                                  self.objLLM)
+                
             else:
                 raise ValueError(f"Invalid LLM Additions: {intLLMAccessory}")
         else:
@@ -144,9 +162,9 @@ class LLM:
         return strIngestPath
     
     def check_validity_of_settings(self,intLLMAccessory,strPromptTemplate):
-        if 'chat_history' in strPromptTemplate and intLLMAccessory in [2,3]:
+        if 'chat_history' in strPromptTemplate and intLLMAccessory in [2,3,4]:
             return True
-        elif 'chat_history' not in strPromptTemplate and intLLMAccessory not in [2,3]:
+        elif 'chat_history' not in strPromptTemplate and intLLMAccessory not in [2,3,4]:
             return True
         else:
             return False
@@ -178,6 +196,14 @@ class LLM:
         This method does actually adds context for this LLM, however the chain is regenerated because the context retriever needs to be updated back to the chain.
         '''
         self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.strPromptTemplate)
+
+    def ingest_context_qa(self):
+        strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings_qa')
+        objLoader = DirectoryLoader(self.strIngestPath, glob="**/agent_playbook.txt", loader_cls=TextLoader, show_progress=False)
+        raw_documents = objLoader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        documents = text_splitter.split_documents(raw_documents)
+        return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
 
     def ingest_context(self):
         strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
@@ -211,6 +237,20 @@ class LLM:
         documents = text_splitter.split_documents(raw_documents)
         return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory=strChatHistoryKnowledgeDirectory)
 
+    def get_QA(self,strAgentResponse,strCustomerQuestion):
+        dicPayload = {
+            'llm_response':strAgentResponse,
+            'customer_question':strCustomerQuestion
+        }
+        try:
+            print(f'[[VERBOSE]] BEFORE CHAIN:\n{strAgentResponse}\n=====\n{strCustomerQuestion}')
+            strResponse = self.objChain.invoke(dicPayload)
+            return strResponse.content
+        except AttributeError:
+            return self.objChain.invoke(dicPayload)
+        except Exception as e:
+            print('[[VERBOSE]] QA ERROR: ',e)
+            
     def get_response(self, strQuestion, 
                      strOutputPath=None, 
                      boolShowSource = False,

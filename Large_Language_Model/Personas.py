@@ -32,8 +32,6 @@ Translate this customer's message to calm tone, and separately summarize the mes
 # Accomplishes #2: Response Suggestion
 strTemplateSuggestResponse = """
 Please generate a concise, customer-focused response for Inchcape agents. Use the provided context (<context></context>) and chat history (<chat></chat>) to inform your reply. 
-Make sure the call response is direct and appropriate for live call, do not write it like an email response.
-
 ------
 Chat History:
 <chat>
@@ -50,11 +48,26 @@ Customer Question:
 {question}
 </question>
 ------
-Provide a brief, actionable response:
+Provide a brief, actionable response appropriate for live call, do not write it like an email response:
+"""
+
+strTemplateQAResponse = """
+This is the conversation history so far:
+{chat_history}
+
+This is the recent query of the customer:
+{customer_question}
+
+This is the recent response of the agent:
+{llm_response}
+
+This is the protocol of the when handling calls:
+{context}
+
+Do you think the response of the agent is correct and why? (Yes/No):
 """
 
 # Accomplishes #3: Contextual Support
-
 strTemplateContextResponse = """
 Use the provided context (<context></context>) and chat history (<chat></chat>) to inform your reply. 
 ------
