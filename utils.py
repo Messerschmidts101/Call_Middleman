@@ -101,12 +101,12 @@ def create_llm_to_room(tblContextDatabase,
                        strPathKnowledgeBaseMain):
     """
     [[Inputs]]
-        1. tblContextDatabase = the pandas table you want to modify
+        1. tblContextDatabase = the pandas table you want to modify; if None, returns an llm object instead.
         2. strRoom = the room that needs to have the LLM
         3. strPathKnowledgeBaseUser = the directory path containing specific contexts
         4. strPathKnowledgeBaseMain = the directory path containing general contexts
     [[Process/Outputs]]
-        This creates LLM for a room, the new llm is added to the table which you must then access.
+        This creates LLM for a room, the new llm is added to the table which you must then access; however if tblContextDatabase is None, returns an llm object instead.
     """
     def include_main_knowledge_base(strRoom):
         Path_Target_Directory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
@@ -125,15 +125,19 @@ def create_llm_to_room(tblContextDatabase,
                         strAPIKey = os.getenv('GROQ_KEY'),
                         boolCreateDatabase = True,
                         intLLMAccessory = 3)
-    # Update Table
-    dicNewRow = {
-                    'strRoom' : strRoom,
-                    'objLLM' : objLLM,
-                    'strKnowledgePath' : Path_Target_Directory,
-                }
-    new_row = pd.DataFrame([dicNewRow]) 
-    tblContextDatabase = pd.concat([tblContextDatabase, new_row], ignore_index=True)
-    return tblContextDatabase
+    
+    if tblContextDatabase: 
+        # Update Table
+        dicNewRow = {
+                        'strRoom' : strRoom,
+                        'objLLM' : objLLM,
+                        'strKnowledgePath' : Path_Target_Directory,
+                    }
+        new_row = pd.DataFrame([dicNewRow]) 
+        tblContextDatabase = pd.concat([tblContextDatabase, new_row], ignore_index=True)
+        return tblContextDatabase
+    else:
+        return objLLM
 
 def get_llm(tblContextDatabase,strRoom):
     '''

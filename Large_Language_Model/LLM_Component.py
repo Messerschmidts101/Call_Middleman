@@ -155,7 +155,6 @@ class LLM:
         '''
         This method is a sub process for ingesting database for context only RAG chains, triggered by ingest_context()
         '''
-        print('type of docs: ',type(docs))
         return "\n\n".join(doc.page_content for doc in docs)
 
     def add_chat_history(self, strUserInput, strLLMOutput):
@@ -222,9 +221,9 @@ class LLM:
             print('Warning: intDelay is less than 90, setting intDelay to 90 or higher.')
             intDelay = 90
         if boolShowSource:
-            objResponseRetriever = self.objRetrieverContext.get_relevant_documents(strQuestion)
+            strContexts = self.objRetrieverContext.get_relevant_documents(strQuestion)
         else:
-            objResponseRetriever = None
+            strContexts = None
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
         if self.intLLMAccessory in [2,3]:
             self.add_chat_history(strQuestion,strResponse)
@@ -233,7 +232,7 @@ class LLM:
                 print('\n-----','Verbose || Chat History: ',strResult ,'\n-----')
         if strOutputPath:
             self.save_response_as_file(strResponse, strOutputPath)
-        return strResponse,objResponseRetriever
+        return strResponse,strContexts
 
     def retry_chain_invoke(self, strQuestion, intRetries, intDelay, boolVerbose):
         for intAttempt in range(intRetries):
