@@ -185,17 +185,18 @@ let mediaRecorder;
 let audioChunks = [];
 let isRecording = false; // State variable to track recording status
 
+
 // Function to toggle between start and stop recording
 function toggleRecording() {
     if (!isRecording) {
-        startRecording(); // Start recording if not already recording
+        startRecordingToggle(); // Start recording if not already recording
     } else {
-        stopRecording(); // Stop recording if it's already in progress
+        stopRecordingToggle(); // Stop recording if it's already in progress
     }
 }
 
 // Function to start recording
-function startRecording() {
+function startRecordingToggle() {
     navigator.mediaDevices.getUserMedia({ audio: true })
         .then(stream => {
             mediaRecorder = new MediaRecorder(stream);
@@ -213,7 +214,7 @@ function startRecording() {
 }
 
 // Function to stop recording and send audio to the server
-function stopRecording() {
+function stopRecordingToggle() {
     if (!isRecording) return; // Prevent stopping if not currently recording
 
     mediaRecorder.stop();
@@ -229,6 +230,56 @@ function stopRecording() {
         isRecording = false; // Reset the state after stopping
     };
 }
+
+
+// Start recording function
+function startRecording() {
+    navigator.mediaDevices.getUserMedia({ audio: true })
+        .then(stream => {
+            mediaRecorder = new MediaRecorder(stream);
+            mediaRecorder.ondataavailable = event => {
+                audioChunks.push(event.data);
+            };
+            mediaRecorder.start();
+            isRecording = true; // Set state to recording
+            updateRecordingStatus("Recording..."); // Display recording status
+            console.log("Recording started");
+        })
+        .catch(error => {
+            console.error('Error accessing microphone: ', error);
+        });
+}
+
+// Stop recording function
+function stopRecording() {
+    if (!isRecording) return; // Prevent stopping if not currently recording
+
+    mediaRecorder.stop();
+    mediaRecorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        console.log('Audio Blob size:', audioBlob.size); // Log Blob size
+        audioChunks = []; // Clear chunks after stopping
+
+        // Send audioBlob to the server or process it as needed
+        sendAudioMessage(audioBlob);
+        updateRecordingStatus("Press & Hold Space to Record"); // Reset status after stopping
+        console.log("Recording stopped and sent");
+        isRecording = false; // Reset state
+    };
+}
+
+// Handle keydown and keyup for spacebar
+document.addEventListener("keydown", (event) => {
+    if (event.code === "Space" && !isRecording) { // Start recording if spacebar is pressed and not recording
+        startRecording();
+    }
+});
+
+document.addEventListener("keyup", (event) => {
+    if (event.code === "Space" && isRecording) { // Stop recording if spacebar is released and recording
+        stopRecording();
+    }
+});
 
 // Function to send the audio file to the server
 function sendAudioMessage(audioBlob) {
