@@ -34,7 +34,7 @@ def index():
     return render_template('chat.html')  
 
 @socketio.on('join_room')
-def on_join(data):
+def on_join(data): 
     global tblContextDatabase
     strUser = data['strId']
     strRoom = data['intRoomNumber']

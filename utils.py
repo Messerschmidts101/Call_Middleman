@@ -95,16 +95,13 @@ def get_chat_history(tblChatHistory, strRoom):
     tblChatHistoryFilteredSorted['dtDate'] = tblChatHistoryFilteredSorted['dtDate'].dt.strftime("%d/%m/%Y %H:%M:%S") # essential to convert to string as payload wont doesnt recognize this data type
     return tblChatHistoryFilteredSorted
 
-
-
-
 def create_llm_to_room(tblContextDatabase,
                        strRoom,
                        strPathKnowledgeBaseUser,
                        strPathKnowledgeBaseMain,
                        intLLMSetting = 1,
-                       intLLMAccessory = 3,
-                       strPromptTemplate = Personas.strTemplateSuggestResponse):
+                       intLLMAccessory = 5,
+                       strPromptTemplate = Personas.strTemplateSuggestResponseV2):
     """
     [[Inputs]]
         1. tblContextDatabase = the pandas table you want to modify; if None, returns an llm object instead.
@@ -122,26 +119,23 @@ def create_llm_to_room(tblContextDatabase,
     strUserFolderPath = os.path.join(strPathKnowledgeBaseUser, strRoom)
     os.makedirs(strUserFolderPath, exist_ok=True)
     include_main_knowledge_base(strRoom)
+    strUserDirectory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
 
     # Create LLM
-    Path_Target_Directory =  os.path.join(strPathKnowledgeBaseUser, strRoom)
     objLLM = LLM_Component.LLM(intLLMSetting = intLLMSetting,
-                        strIngestPath = Path_Target_Directory,
+                        strIngestPath = strUserDirectory,
                         strPromptTemplate = strPromptTemplate,
                         strAPIKey = os.getenv('GROQ_KEY'),
                         boolCreateDatabase = True,
                         intLLMAccessory = intLLMAccessory)
     
     if tblContextDatabase is None: 
-        
         return objLLM
     else:
         # Update Table
-        dicNewRow = {
-                        'strRoom' : strRoom,
-                        'objLLM' : objLLM,
-                        'strKnowledgePath' : Path_Target_Directory,
-                    }
+        dicNewRow = {'strRoom' : strRoom,
+                    'objLLM' : objLLM,
+                    'strKnowledgePath' : strUserDirectory}
         new_row = pd.DataFrame([dicNewRow]) 
         tblContextDatabase = pd.concat([tblContextDatabase, new_row], ignore_index=True)
         return tblContextDatabase
@@ -179,7 +173,7 @@ def get_llm_advice(tblContextDatabase,
         # Set the persona to advising
         strPromptTemplate = Personas.strTemplateSuggestResponseV2
         tempobjLLM.create_chain(intLLMAccessory = 5,
-                                intRetrieverK = 5,
+                                intRetrieverK = 2,
                                 strPromptTemplate = strPromptTemplate)
         # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
@@ -213,7 +207,7 @@ def get_llm_translation(tblContextDatabase,
         # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
                                                           strOutputPath = None, 
-                                                          boolShowSource = True,
+                                                          boolShowSource = False,
                                                           boolSaveChat = False)
         return strResponse,strContext
     else:

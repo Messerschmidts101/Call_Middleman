@@ -112,7 +112,7 @@ class LLM:
             elif intLLMAccessory == 2:
                 raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMAccessory}")
             elif intLLMAccessory == 3:
-                # Both context and chat history in RAG
+                # Default both context and chat history in RAG
                 self.objPromptTemplate = PromptTemplate(
                     template = strPromptTemplate, 
                     input_variables=["context", "question", "chat_history"]
@@ -143,7 +143,6 @@ class LLM:
                                   self.objLLM)
             elif intLLMAccessory == 5:
                 # extremely specialized responding; this consumes alot of tokens, reduce intRetrieverK = 2
-                intRetrieverK = 2
                 self.objPromptTemplate = PromptTemplate(
                     template = strPromptTemplate, 
                     input_variables=["chat_history",
@@ -279,6 +278,18 @@ class LLM:
                      intDelay = 90,
                      boolSaveChat = True,
                      boolVerbose = True):
+        """
+        [[Inputs]]
+            1. strQuestion = a string that is the question you want to pass to the LLM.
+            2. strOutputPath = a string that is the path you want to output the result; take note this doesnt mean the conversation is saved to chat history.
+            3. boolShowSource = a boolean that is to show the retrieved context or no.
+            4. intRetries = an integer that is the amount of automatic retry attempts to LLM if there are failures.
+            5. intDelay = an integer that is the wait time in seconds in between automatic retries.
+            6. boolSaveChat = a boolean that indicates if the conversation will be recorded for chat history.
+            7. boolVerbose = a boolean to show the internal process comments
+        [[Process/Outputs]]
+            1. asks the llm via strQuestion and returns both the response and the context used.
+        """
         if intDelay < 90:
             print('Warning: intDelay is less than 90, setting intDelay to 90 or higher.')
             intDelay = 90
@@ -305,8 +316,7 @@ class LLM:
                 return self.objChain.invoke(strQuestion)
             except Exception as e:
                 if intAttempt < intRetries - 1:
-                    if boolVerbose:
-                        print(f'Error {intAttempt}: {e}. Retrying in {intDelay} seconds')
+                    print(f'Error {intAttempt}: {e}. Retrying in {intDelay} seconds')
                     time.sleep(intDelay)
                 else:
                     raise RuntimeError(f"Failed after {intRetries} attempts: {e}")
