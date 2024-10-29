@@ -132,7 +132,10 @@ def create_llm_to_room(tblContextDatabase,
                         boolCreateDatabase = True,
                         intLLMAccessory = intLLMAccessory)
     
-    if tblContextDatabase: 
+    if tblContextDatabase is None: 
+        
+        return objLLM
+    else:
         # Update Table
         dicNewRow = {
                         'strRoom' : strRoom,
@@ -142,8 +145,6 @@ def create_llm_to_room(tblContextDatabase,
         new_row = pd.DataFrame([dicNewRow]) 
         tblContextDatabase = pd.concat([tblContextDatabase, new_row], ignore_index=True)
         return tblContextDatabase
-    else:
-        return objLLM
 
 def get_llm(tblContextDatabase,strRoom):
     '''
@@ -172,12 +173,12 @@ def get_llm_advice(tblContextDatabase,
     '''
     tblResult = tblContextDatabase[tblContextDatabase['strRoom'] == strRoom]
     if not tblResult.empty:
+        print('[[VERBOSE]] get_llm_advice')
         # Get the LLM object
         tempobjLLM = tblResult['objLLM'].iloc[0]
         # Set the persona to advising
-        #strPromptTemplate = Personas.strTemplateSuggestResponse
-        strPromptTemplate = Personas.strTemplateContextResponse
-        tempobjLLM.create_chain(intLLMAccessory = 3,
+        strPromptTemplate = Personas.strTemplateSuggestResponseV2
+        tempobjLLM.create_chain(intLLMAccessory = 5,
                                 intRetrieverK = 5,
                                 strPromptTemplate = strPromptTemplate)
         # Ask the LLM object
@@ -186,7 +187,6 @@ def get_llm_advice(tblContextDatabase,
                                                           boolShowSource = True)
         return strResponse,strContext
     else:
-        # Do something if no rows matched the filter
         print(f"No data found for room: {strRoom}")
         return None,None
 
@@ -213,12 +213,10 @@ def get_llm_translation(tblContextDatabase,
         # Ask the LLM object
         strResponse, strContext = tempobjLLM.get_response(strQuestion = strQuestion, 
                                                           strOutputPath = None, 
-                                                          boolShowSource = True)
-        #print("[[VERBOSE]] check llm response here: ", strResponse)
-        #print("[[VERBOSE]] check llm reference here: ", strContext)
+                                                          boolShowSource = True,
+                                                          boolSaveChat = False)
         return strResponse,strContext
     else:
-        # Do something if no rows matched the filter
         print(f"No data found for room: {strRoom}")
         return None,None
     

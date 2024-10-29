@@ -90,6 +90,7 @@ def convert_audio_to_text_message():
 @socketio.on('ask_llm') # LLM advise needs to be done asynchronously with emit_protocol
 def ask_llm(data):
     strUserType = data['strUserType']
+    print(f"entered advice {strUserType}")
     if strUserType.lower() == 'customer':
         global tblContextDatabase
         strRoom = data['intRoomNumber']

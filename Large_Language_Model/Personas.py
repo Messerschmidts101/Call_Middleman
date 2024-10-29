@@ -24,7 +24,7 @@ Translate this customer's message by putting UwU, OwO, or UwO in front of every 
 """
 
 strTemplateTranslateToCalm = """
-Translate this customer's message to calm tone, and separately summarize the message with bullet points:
+Improve this message to calm tone message (do not write like an email), and separately summarize the message with bullet points:
 {question}
 """
 
@@ -67,6 +67,26 @@ This is the protocol of the when handling calls:
 Do you think the response of the agent is correct and why? (Yes/No):
 """
 
+["chat_history",
+                                     "customer_question",
+                                     "response_guide",
+                                     "context"]
+
+strTemplateSuggestResponseV2 = """
+This is the conversation history so far:
+{chat_history}
+
+This is the recent query of the customer:
+{customer_question}
+
+This is the protocol of the when handling calls:
+{response_guide}
+
+This is additional context regarding the customer's question:
+{context}
+
+Provide a brief, actionable response appropriate for live call, do not write it like an email response:
+"""
 # Accomplishes #3: Contextual Support
 strTemplateContextResponse = """
 Use the provided context (<context></context>) and chat history (<chat></chat>) to inform your reply. 
