@@ -17,6 +17,7 @@ from langchain_openai import AzureChatOpenAI
 
 import os
 import uuid
+from operator import itemgetter
 from datetime import datetime
 import time
 
@@ -77,7 +78,7 @@ class LLM:
                           strPromptTemplate = strPromptTemplate)
         
     def create_llm(self,intLLMSetting,fltTemperature,strModelName):
-        if intLLMSetting in [1, 2, 5]: # Groq LLM
+        if intLLMSetting in [1, 2, 5, 6]: # Groq LLM
             if not self.strAPIKey:
                 raise ValueError(f"Requires API Key, set value of 'strAPIKey'")
             self.objLLM = ChatGroq(temperature = fltTemperature, 
@@ -111,7 +112,7 @@ class LLM:
             elif intLLMAccessory == 2:
                 raise ValueError(f"To be added soon Chat History only LLM accessory: {intLLMAccessory}")
             elif intLLMAccessory == 3:
-                # Both context and chat history in RAG
+                # Default both context and chat history in RAG
                 self.objPromptTemplate = PromptTemplate(
                     template = strPromptTemplate, 
                     input_variables=["context", "question", "chat_history"]
@@ -124,6 +125,42 @@ class LLM:
                                   "question": RunnablePassthrough()} | 
                                   self.objPromptTemplate | 
                                   self.objLLM)
+            elif intLLMAccessory == 4:
+                # QA mode; decomission this soon
+                self.objPromptTemplate = PromptTemplate(
+                    template = strPromptTemplate, 
+                    input_variables=["chat_history","customer_question","llm_response","context"]
+                )
+
+                self.objRetrieverContext = self.ingest_context_qa().as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objRetrieverChatHistory = self.ingest_chat_history().as_retriever(search_kwargs={"k": intRetrieverK})
+                # Use the updated combine_docs_chat_history function to provide chat history
+                self.objChain = ({"chat_history":  itemgetter('customer_question') | self.objRetrieverChatHistory | self.combine_docs,  
+                                  "context": itemgetter('customer_question') | self.objRetrieverContext | self.combine_docs,
+                                  "customer_question": itemgetter('customer_question') | RunnablePassthrough(),
+                                  "llm_response": itemgetter('llm_response') | RunnablePassthrough()} | 
+                                  self.objPromptTemplate | 
+                                  self.objLLM)
+            elif intLLMAccessory == 5:
+                # extremely specialized responding; this consumes alot of tokens, reduce intRetrieverK = 2
+                self.objPromptTemplate = PromptTemplate(
+                    template = strPromptTemplate, 
+                    input_variables=["chat_history",
+                                     "customer_question",
+                                     "response_guide",
+                                     "context"]
+                )
+
+                self.objRetrieverContext = self.ingest_context().as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objRetrieverContextQA = self.ingest_context_qa().as_retriever(search_kwargs={"k": intRetrieverK})
+                self.objRetrieverChatHistory = self.ingest_chat_history().as_retriever(search_kwargs={"k": intRetrieverK})
+                # Use the updated combine_docs_chat_history function to provide chat history
+                self.objChain = ({"chat_history":  self.objRetrieverChatHistory | self.combine_docs,  
+                                  "customer_question":  RunnablePassthrough(),
+                                  "response_guide": self.objRetrieverContextQA | self.combine_docs,
+                                  "context":  self.objRetrieverContext | self.combine_docs} | 
+                                  self.objPromptTemplate | 
+                                  self.objLLM)                
             else:
                 raise ValueError(f"Invalid LLM Additions: {intLLMAccessory}")
         else:
@@ -144,9 +181,9 @@ class LLM:
         return strIngestPath
     
     def check_validity_of_settings(self,intLLMAccessory,strPromptTemplate):
-        if 'chat_history' in strPromptTemplate and intLLMAccessory in [2,3]:
+        if 'chat_history' in strPromptTemplate and intLLMAccessory in [2,3,4,5]:
             return True
-        elif 'chat_history' not in strPromptTemplate and intLLMAccessory not in [2,3]:
+        elif 'chat_history' not in strPromptTemplate and intLLMAccessory not in [2,3,4,5]:
             return True
         else:
             return False
@@ -178,6 +215,14 @@ class LLM:
         This method does actually adds context for this LLM, however the chain is regenerated because the context retriever needs to be updated back to the chain.
         '''
         self.create_chain(self.intLLMAccessory,self.intRetrieverK,self.strPromptTemplate)
+
+    def ingest_context_qa(self):
+        strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings_qa')
+        objLoader = DirectoryLoader(self.strIngestPath, glob="**/agent_playbook.txt", loader_cls=TextLoader, show_progress=False)
+        raw_documents = objLoader.load()
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        documents = text_splitter.split_documents(raw_documents)
+        return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory = strContextKnowledgeDirectory)
 
     def ingest_context(self):
         strContextKnowledgeDirectory = os.path.join(self.strIngestPath,'chroma_embeddings')
@@ -211,12 +256,40 @@ class LLM:
         documents = text_splitter.split_documents(raw_documents)
         return Chroma.from_documents(documents, self.objEmbeddingModel, persist_directory=strChatHistoryKnowledgeDirectory)
 
+    def get_QA(self,strAgentResponse,strCustomerQuestion):
+        dicPayload = {
+            'llm_response':strAgentResponse,
+            'customer_question':strCustomerQuestion
+        }
+        try:
+            print(f'[[VERBOSE]] BEFORE CHAIN:\n{strAgentResponse}\n=====\n{strCustomerQuestion}')
+            strResponse = self.objChain.invoke(dicPayload)
+            print(f'[[VERBOSE]] AFTER CHAIN:')
+            return strResponse.content
+        except AttributeError:
+            return strResponse
+        except Exception as e:
+            print('[[VERBOSE]] QA ERROR: ',e)
+            
     def get_response(self, strQuestion, 
                      strOutputPath=None, 
                      boolShowSource = False,
                      intRetries = 3,
                      intDelay = 90,
-                     boolVerbose = False):
+                     boolSaveChat = True,
+                     boolVerbose = True):
+        """
+        [[Inputs]]
+            1. strQuestion = a string that is the question you want to pass to the LLM.
+            2. strOutputPath = a string that is the path you want to output the result; take note this doesnt mean the conversation is saved to chat history.
+            3. boolShowSource = a boolean that is to show the retrieved context or no.
+            4. intRetries = an integer that is the amount of automatic retry attempts to LLM if there are failures.
+            5. intDelay = an integer that is the wait time in seconds in between automatic retries.
+            6. boolSaveChat = a boolean that indicates if the conversation will be recorded for chat history.
+            7. boolVerbose = a boolean to show the internal process comments
+        [[Process/Outputs]]
+            1. asks the llm via strQuestion and returns both the response and the context used.
+        """
         if intDelay < 90:
             print('Warning: intDelay is less than 90, setting intDelay to 90 or higher.')
             intDelay = 90
@@ -225,10 +298,10 @@ class LLM:
         else:
             strContexts = None
         strResponse = self.retry_chain_invoke(strQuestion,intRetries,intDelay,boolVerbose)
-        if self.intLLMAccessory in [2,3]:
+        if boolSaveChat:
             self.add_chat_history(strQuestion,strResponse)
-            strResult = self.objRetrieverChatHistory.get_relevant_documents(query = strQuestion)
-            if boolVerbose:
+            if boolVerbose:                
+                strResult = self.objRetrieverChatHistory.get_relevant_documents(query = strQuestion)
                 print('\n-----','Verbose || Chat History: ',strResult ,'\n-----')
         if strOutputPath:
             self.save_response_as_file(strResponse, strOutputPath)
@@ -243,8 +316,7 @@ class LLM:
                 return self.objChain.invoke(strQuestion)
             except Exception as e:
                 if intAttempt < intRetries - 1:
-                    if boolVerbose:
-                        print(f'Error {intAttempt}: {e}. Retrying in {intDelay} seconds')
+                    print(f'Error {intAttempt}: {e}. Retrying in {intDelay} seconds')
                     time.sleep(intDelay)
                 else:
                     raise RuntimeError(f"Failed after {intRetries} attempts: {e}")
