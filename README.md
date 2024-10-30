@@ -3,14 +3,13 @@ A middleman solution for call centers that facilitates communication between age
 
 ## Benefits
 1. **Improves Worker's Mental Health**: Alleviates emotional strain and stress for agents by managing challenging customer interactions more effectively.
-2. **Simplify Call Center Operations**: Makes the job easier for both younger and older workers by reducing the complexity of handling customer interactions, thus supporting a diverse workforce and helping to create inclusive job opportunities.
-3. **Enhance Communication Efficiency**: Optimizes message exchange, enabling agents to respond to customer queries with greater speed and accuracy.
+2. **Promote Inclusive Call Center Work**: Makes the job easier for both younger and older workers by reducing the complexity of handling customer interactions, thus supporting a diverse workforce and helping to create inclusive job opportunities.
+3. **Boost Call Productivity**: Optimizes message exchange, enabling agents to respond to customer queries with greater speed and accuracy.
 
 ## How
-1. **Message Processing**: The LLM filters, summarizes, and enhances customer messages, transforming them into easily digestible and friendly-toned messages for agents.
-2. **Response Suggestions**: The LLM suggests appropriate responses based on the customer's message, emotional state, and relevant customer details, so that calls are resolved efficiently.
-3. **Contextual Support**: Maintains the context of ongoing conversations, ensuring that agents are equipped with relevant information and previous interaction history to handle customer queries smoothly.
-
+1. **Message Processing**: A seperate RAG chain translates customer messages, supporting worker mental health by providing clear, actionable points.
+2. **Response Suggestions**: Another seperate context-aware RAG chain delivers response suggestions, fostering inclusivity by making the call process easier to navigate.
+3. **Contextual Support**: Same latter RAG chain streamlines call flow even lengthy ones, achieving higher productivity and efficiency.
 
 # Requirements
 ## Install FFMPEG for server; this is used to convert audio files for speech recognition compatability
