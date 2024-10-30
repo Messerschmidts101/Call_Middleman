@@ -267,15 +267,18 @@ function stopRecording() {
         isRecording = false; // Reset state
     };
 }
+const userMessage = document.getElementById("userMessage");
 
 // Handle keydown and keyup for spacebar
 document.addEventListener("keydown", (event) => {
+    if (event.target === userMessage) return; // Ignore if typing in the textarea
     if (event.code === "Space" && !isRecording) { // Start recording if spacebar is pressed and not recording
         startRecording();
     }
 });
 
 document.addEventListener("keyup", (event) => {
+    if (event.target === userMessage) return; // Ignore if typing in the textarea
     if (event.code === "Space" && isRecording) { // Stop recording if spacebar is released and recording
         stopRecording();
     }

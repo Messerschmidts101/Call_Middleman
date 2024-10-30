@@ -7,4 +7,16 @@ I. Warranty Codes:
         Description: Extended Warranty – Includes additional coverage for major components for up to 5 years or 60,000 miles, extending beyond the standard warranty.
     C. **PRT-03**
         Description: Parts Warranty – Provides coverage for specific parts (e.g., battery, alternator, brake, and headlights) for up to 2 years, regardless of mileage.
-        
+II. Accessory Details:
+   A. **Headlights HL-1**
+      - **Description:** High-quality, durable headlights providing improved visibility and longevity.
+      - **Price:** $75 per unit
+      - **Stock:** Available (current stock: 50 units)
+   B. **Floor Mats FL-2**
+      - **Description:** Custom-fit floor mats designed for durability and ease of cleaning.
+      - **Price:** $35 per set
+      - **Stock:** Available (current stock: 120 units)
+   C. **Roof Rack RR-3**
+      - **Description:** Heavy-duty roof rack suitable for multiple vehicle models.
+      - **Price:** $200 per unit
+      - **Stock:** Limited availability (current stock: 15 units)
