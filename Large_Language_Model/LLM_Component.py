@@ -243,9 +243,9 @@ class LLM:
         with open(strChatHistoryFile, 'w') as file:
             file.write('Conversation History')
             for dicItem in self.lisChatHistory:
-                file.write(f"-----\nMessage Index: {dicItem["Message Index"]}; Time: {dicItem["Timestamp"]}\nUser: {dicItem["User"]}:\n")
-                file.write(f"-----\nMessage Index: {dicItem["Message Index"]}; Time: {dicItem["Timestamp"]}\nSystem: {dicItem["System"]}:\n")
-        
+                file.write(f"-----\nMessage Index: {dicItem['Message Index']}; Time: {dicItem['Timestamp']}\nUser: {dicItem['User']}:\n")
+                file.write(f"-----\nMessage Index: {dicItem['Message Index']}; Time: {dicItem['Timestamp']}\nSystem: {dicItem['System']}:\n")
+
         #Step two: embed the text file
         strChatHistoryKnowledgeDirectory = os.path.join(strChatHistoryRawDirectory, 'chroma_embeddings')
         

@@ -1,3 +1,4 @@
 venv/
 .env
 Website/Database/User_Knowledge_Base
+__pycache__
