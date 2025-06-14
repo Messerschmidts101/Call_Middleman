@@ -12,10 +12,15 @@ A middleman solution for call centers that facilitates communication between age
 3. **Contextual Support**: Same latter RAG chain streamlines call flow even lengthy ones, achieving higher productivity and efficiency.
 
 # How To Use
+## Get Groq API Key first
 ## To Build 
 docker build -t llm-secure-app .
 ## To Run
-docker run -d -p 8000:8000 --name llm-app llm-secure-app
+docker run -d `
+  -p 8000:8000 `
+  --env-file .env `
+  --name llm-app `
+  llm-secure-app
 ## Requirements If Running Non-Docker
 ### Install FFMPEG for server; this is used to convert audio files for speech recognition compatability
 1. Download full build https://github.com/GyanD/codexffmpeg/releases/tag/2024-10-21-git-baa23e40c1
@@ -25,10 +30,10 @@ docker run -d -p 8000:8000 --name llm-app llm-secure-app
 1. python -m venv venv
 2. Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 3. venv\Scripts\activate
-### If missing .dll problem, follow this installation 
-https://discuss.pytorch.org/t/failed-to-import-pytorch-fbgemm-dll-or-one-of-its-dependencies-is-missing/201969/17
+### If missing .dll problem, just downgrade to this
+%pip install torch==2.3.0 torchvision==0.18.0 torchaudio==2.3.0
 ### If problem with chromadb, follow this installation/selection
 https://www.scivision.dev/python-windows-visual-c-14-required
 ### If text to speech not working in browser, add this extension if chrome-based browser
 https://chromewebstore.google.com/detail/speech-recognition-anywhe/kdnnmhpmcakdilnofmllgcigkibjonof?pli=1
-
+### 

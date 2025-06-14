@@ -58,11 +58,11 @@ class LLM:
         Both chat history and context has retrievers, thus the chain will be recreated per question if the vector database will be updated.
         '''
         dictLLMSettings = {
-            1: "mixtral-8x7b-32768",
+            1: "meta-llama/llama-4-scout-17b-16e-instruct",
             2: "llama3-70b-8192",
             3: "mistralai/Mistral-7B-Instruct-v0.2",
             4: "gpt-4o-mini",
-            5: "mixtral-8x7b-32768",
+            5: "meta-llama/llama-4-scout-17b-16e-instruct",
         }
         strModelName = dictLLMSettings.get(intLLMSetting, None)
         if not strModelName:
